@@ -1,0 +1,7 @@
+{
+  "appId": "com.earlyai.app",
+  "appName": "early AI",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "plugins": { "CapacitorHttp": { "enabled": true } }
+}

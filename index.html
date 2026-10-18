@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>early AI</title>
+<style>
+:root{--ink:#070f18;--panel:rgba(13,30,48,.72);--line:#1a3652;--text:#d9ecf7;--dim:#6f8ba3;--glow:#2de2ff;--warn:#ffb454;--red:#ff4d5e}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:radial-gradient(120% 60% at 50% 0,#0d2236 0,var(--ink) 60%);color:var(--text);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;padding:env(safe-area-inset-top,0) 0 env(safe-area-inset-bottom,0)}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+header .t{flex:1;min-width:0}header b{font-size:17px;letter-spacing:.42em;font-weight:600}
+header small{display:block;color:var(--dim);font-size:10px;letter-spacing:.18em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill{font-size:11px;letter-spacing:.16em;color:var(--glow);border:1px solid var(--glow);border-radius:99px;padding:3px 10px;white-space:nowrap}
+#stop{background:rgba(255,77,94,.12);color:var(--red);border:1px solid var(--red);border-radius:6px;padding:5px 10px;font:inherit;font-size:12px;letter-spacing:.1em}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.view{display:none;flex:1;min-height:0;overflow-y:auto;padding:10px 12px}.view.on{display:block}
+#log{flex-direction:column;gap:8px}#log.on{display:flex}
+.stage{position:relative;height:clamp(230px,40vh,380px)}
+#holo{width:100%;height:100%;display:block;filter:drop-shadow(0 0 10px rgba(45,226,255,.45))}
+#state{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-size:13px;letter-spacing:.5em;color:var(--text);padding-left:.5em}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.wide{grid-column:1/-1}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);padding:10px 12px}
+.card::before,.card::after{content:"";position:absolute;width:10px;height:10px;border:2px solid var(--glow)}
+.card::before{top:-1px;left:-1px;border-right:0;border-bottom:0}.card::after{bottom:-1px;right:-1px;border-left:0;border-top:0}
+.card h5{margin:0 0 8px;font-size:11px;letter-spacing:.22em;color:var(--glow);font-weight:600}
+.big{font-size:38px;font-weight:300;line-height:1;letter-spacing:.02em}.big sup{font-size:15px;color:var(--glow);margin-left:3px}
+#dateline{margin-top:8px;font-size:11px;letter-spacing:.12em;color:var(--dim);text-transform:uppercase}
+#gauges{display:flex;justify-content:space-between;gap:4px}
+.rg{position:relative;width:52px;text-align:center}.rg svg{width:52px;height:52px}
+.r0,.r1{fill:none;stroke-width:3.5}.r0{stroke:var(--line)}.r1{stroke:var(--glow);stroke-linecap:round}
+.rg b{position:absolute;top:16px;left:0;right:0;font-size:11px;font-weight:600}.rg small{font-size:10px;letter-spacing:.14em;color:var(--dim)}
+.row2{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px solid rgba(26,54,82,.6)}.row2 span:first-child{color:var(--dim)}
+.prov{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.prov span{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:2px 9px}
+.prov i{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;background:var(--dim)}.prov .ok i{background:var(--glow);box-shadow:0 0 6px var(--glow)}
+#live{font-size:14px;color:var(--text);min-height:40px;white-space:pre-wrap}
+.m{max-width:88%;padding:8px 12px;border-radius:4px;white-space:pre-wrap;word-wrap:break-word;border:1px solid var(--line)}
+.m small{display:block;font-size:10px;letter-spacing:.16em;color:var(--dim);margin-bottom:3px}
+.u{align-self:flex-end;background:#10354a;border-color:#1c5675}.z{align-self:flex-start;background:var(--panel)}
+.s{align-self:center;color:var(--dim);font-size:12px;border:0}.z.auto{border-color:var(--glow);background:#0d2c36}
+#mind{font-size:14px}#mind h4{margin:14px 0 6px;color:var(--glow);font-size:11px;letter-spacing:.22em;font-weight:600}
+#mind .t{border-left:2px solid var(--line);padding:2px 0 2px 10px;margin:6px 0;color:var(--dim)}#mind .t i{color:var(--text);font-style:normal}
+.bar{height:5px;background:var(--line);overflow:hidden}.bar>div{height:100%;background:var(--glow);transition:width .6s}
+#cam{display:none;width:100%;max-height:150px;object-fit:cover;border-top:1px solid var(--line)}
+#confirm{display:none;margin:0 12px 8px;padding:12px;border:1px solid var(--warn);background:#2a2112}#confirm p{margin:0 0 10px;word-break:break-all}
+.row{display:flex;gap:8px}
+button.b{flex:1;padding:9px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit}
+button.go{background:var(--glow);color:#04202a;border-color:var(--glow);font-weight:600}button.no{background:none}
+#mic.live{background:var(--red);border-color:var(--red);color:#fff}
+footer{padding:6px 12px;display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);background:rgba(7,15,24,.9)}
+footer input{width:100%;padding:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit}
+#chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+#chips button{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:5px 11px;font:inherit;font-size:12px}
+nav{display:flex;border-top:1px solid var(--line)}
+nav button{flex:1;padding:11px 4px;border:0;border-top:2px solid transparent;background:none;color:var(--dim);font:inherit;font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+nav button.on{color:var(--glow);border-top-color:var(--glow)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+dialog{background:#0d1d2e;color:var(--text);border:1px solid var(--line);width:min(92vw,420px)}
+dialog input[type=password],dialog select{width:100%;margin:6px 0 12px;padding:10px;border:1px solid var(--line);background:var(--ink);color:var(--text);font:inherit}
+dialog input[type=range]{width:100%;margin:6px 0 12px}dialog label{display:block;font-size:14px}dialog::backdrop{background:rgba(0,0,0,.65)}dialog small{color:var(--dim)}
+#inner div{color:var(--dim);font-size:13px;margin-bottom:4px}#inner div:first-child{color:var(--text)}
+.dv{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;color:var(--dim);margin-top:5px}.dv span{width:64px}.dv .bar{flex:1}
+#route{position:absolute;top:6px;left:8px;font-size:11px;letter-spacing:.06em;color:var(--glow);border:1px solid var(--line);background:rgba(7,15,24,.7);padding:2px 8px;z-index:2}
+.ag{display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(26,54,82,.5)}.ag em{font-style:normal;color:var(--dim)}.ag .working{color:var(--glow)}.ag .completed{color:#6dffb0}.ag .failed{color:var(--red)}
+.chipm{display:inline-block;border:1px solid var(--line);padding:5px 10px;margin:0 6px 6px 0;font-size:12px;letter-spacing:.1em;background:var(--panel);color:var(--text)}.chipm.on{border-color:var(--glow);color:var(--glow)}
+.pv input{width:100%;margin:6px 0;padding:8px;border:1px solid var(--line);background:var(--ink);color:var(--text);font:inherit}
+#imgPrev{display:none;align-items:center;gap:8px}#imgPrev img{height:44px;border:1px solid var(--glow)}#imgPrev button{border:1px solid var(--line);background:none;color:var(--text);padding:2px 8px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--dim);margin-right:6px}.dot.ok{background:#6dffb0}.dot.bad{background:var(--red)}
+#vTasks textarea{width:100%;min-height:64px;padding:10px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit}
+pre.out{white-space:pre-wrap;word-wrap:break-word;font:12px/1.45 ui-monospace,Menlo,monospace;max-height:280px;overflow:auto;margin:6px 0;color:var(--text)}
+.ev{font:11px/1.5 ui-monospace,Menlo,monospace;color:var(--dim)}
+#pal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9;padding:14vh 12px 0}#pal>div{max-width:420px;margin:auto;background:#0d1d2e;border:1px solid var(--glow)}
+#pal input{width:100%;padding:12px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--text);font:inherit}#pal button{display:block;width:100%;text-align:left;padding:11px 12px;border:0;background:none;color:var(--text);font:inherit}#pal button:hover,#pal button.sel{background:#12334a}
+nav button{letter-spacing:.06em;font-size:10px}
+@media (orientation:landscape) and (max-height:600px){
+body{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;grid-template-areas:"nav hdr" "nav main" "nav foot";padding:0 env(safe-area-inset-right,0) 0 env(safe-area-inset-left,0)}
+header{grid-area:hdr;padding:3px 10px}header b{font-size:13px}header small{display:none}.pill{padding:2px 8px;font-size:10px}#stop{padding:3px 8px}
+main{grid-area:main}
+nav{grid-area:nav;flex-direction:column;border-top:0;border-right:1px solid var(--line)}
+nav button{flex:1;border-top:0;border-left:2px solid transparent;padding:2px;font-size:9px;letter-spacing:.04em}
+nav button.on{border-left-color:var(--glow)}
+footer{grid-area:foot;flex-direction:row;align-items:center;gap:8px;padding:4px 10px}#chips{display:none}footer input#txt{flex:1;min-width:0;padding:7px 10px}footer .row{flex:none;width:56%}
+#cam{grid-area:main;justify-self:end;align-self:end;width:30%;max-height:100px;z-index:3}
+#confirm{grid-area:main;align-self:end;z-index:4;margin:0 8px 6px}
+#vHome.on{display:grid;grid-template-columns:minmax(150px,34%) 1fr;gap:12px;align-items:start}
+#vHome .stage{height:calc(100dvh - 90px);min-height:120px;position:sticky;top:0}#vHome .grid{margin-top:0}
+#state{font-size:10px}.big{font-size:28px}
+.view{padding:6px 10px}
+button.b{padding:7px 4px;font-size:13px}
+dialog{max-height:92dvh;overflow-y:auto}
+.m{max-width:70%}
+#pal{padding-top:4vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ===== KHATARNAK THEMES ===== */
+:root{--rgb:45,226,255;--a2:#ffc233}
+html[data-theme=reaper]{--ink:#080204;--panel:rgba(32,5,10,.8);--line:#6a1822;--text:#ffeaea;--dim:#b07880;--glow:#ff2a3d;--rgb:255,42,61;--a2:#ff9a1f;--red:#ff2a3d}
+html[data-theme=venom]{--ink:#010802;--panel:rgba(3,28,12,.8);--line:#0f6a30;--text:#e0ffe9;--dim:#68a880;--glow:#27ff7a;--rgb:39,255,122;--a2:#d4ff1f;--red:#ff4d5e}
+html[data-theme=arc]{--ink:#050c16;--panel:rgba(10,26,44,.78);--line:#1a4a6e;--glow:#2de2ff;--rgb:45,226,255;--a2:#ffc233}
+body{background:radial-gradient(90% 55% at 50% 0,rgba(var(--rgb),.22) 0,transparent 70%),linear-gradient(rgba(var(--rgb),.05) 1px,transparent 1px) 0 0/34px 34px,linear-gradient(90deg,rgba(var(--rgb),.05) 1px,transparent 1px) 0 0/34px 34px,var(--ink)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0,rgba(0,0,0,.22) 1px,transparent 1px,transparent 3px);mix-blend-mode:multiply}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:49;background:radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(0,0,0,.65) 100%)}
+header{background:linear-gradient(90deg,rgba(var(--rgb),.18),transparent 70%);border-bottom:1px solid var(--glow);box-shadow:0 2px 18px rgba(var(--rgb),.35)}
+header b{color:var(--glow);text-transform:uppercase;letter-spacing:.2em;white-space:nowrap;text-shadow:0 0 10px rgba(var(--rgb),.9);animation:gl 4s infinite}
+@keyframes gl{0%,90%,100%{transform:none;text-shadow:0 0 10px rgba(var(--rgb),.9)}92%{transform:translate(2px,-1px);text-shadow:-3px 0 var(--a2),3px 0 var(--glow)}95%{transform:translate(-2px,1px);text-shadow:3px 0 var(--a2),-3px 0 var(--glow)}}
+.pill{box-shadow:0 0 10px rgba(var(--rgb),.5),inset 0 0 8px rgba(var(--rgb),.25);animation:pl 2s infinite}@keyframes pl{50%{box-shadow:0 0 18px rgba(var(--rgb),.9),inset 0 0 8px rgba(var(--rgb),.4)}}
+.card{clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px));background:linear-gradient(135deg,rgba(var(--rgb),.14),var(--panel) 45%);box-shadow:inset 0 0 22px rgba(var(--rgb),.14);border-color:rgba(var(--rgb),.55)}
+.card h5{text-shadow:0 0 8px rgba(var(--rgb),.8)}
+.stage::before{content:"";position:absolute;left:50%;top:46%;width:min(78vw,310px);aspect-ratio:1;margin:calc(min(78vw,310px)/-2) 0 0 calc(min(78vw,310px)/-2);border-radius:50%;background:conic-gradient(from 0deg,transparent 0,rgba(var(--rgb),.38) 10%,transparent 11%);animation:sp 3.6s linear infinite;pointer-events:none;-webkit-mask:radial-gradient(circle,transparent 38%,#000 39%);mask:radial-gradient(circle,transparent 38%,#000 39%)}
+.stage::after{content:"";position:absolute;left:50%;top:46%;width:min(88vw,350px);aspect-ratio:1;margin:calc(min(88vw,350px)/-2) 0 0 calc(min(88vw,350px)/-2);border-radius:50%;border:2px dashed rgba(var(--rgb),.45);animation:sp 18s linear infinite reverse;pointer-events:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+#holo{position:relative;z-index:1;filter:drop-shadow(0 0 16px rgba(var(--rgb),.85))}
+#state{z-index:2;color:var(--glow);text-shadow:0 0 10px var(--glow);font-weight:700}
+button.b,#chips button,.chipm{clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px);border-color:rgba(var(--rgb),.6);text-transform:uppercase;letter-spacing:.08em}
+button.go{background:linear-gradient(135deg,var(--glow),var(--a2));color:#050505;box-shadow:0 0 18px rgba(var(--rgb),.7);animation:pl 2.4s infinite}
+nav{background:rgba(0,0,0,.55);border-top:1px solid var(--glow);box-shadow:0 -2px 18px rgba(var(--rgb),.3)}
+nav button.on{background:linear-gradient(0deg,rgba(var(--rgb),.28),transparent);text-shadow:0 0 8px var(--glow)}
+footer{background:rgba(0,0,0,.65)}footer input{border-color:rgba(var(--rgb),.7);box-shadow:inset 0 0 12px rgba(var(--rgb),.18)}
+.u{background:rgba(var(--rgb),.16);border-color:rgba(var(--rgb),.6)}.z{border-left:3px solid var(--glow)}.z.auto{background:rgba(var(--rgb),.1)}
+#stop{box-shadow:0 0 10px rgba(255,77,94,.6)}#route{border-color:var(--glow);box-shadow:0 0 8px rgba(var(--rgb),.5);z-index:3}
+dialog,#pal>div{background:var(--ink);border-color:var(--glow);box-shadow:0 0 30px rgba(var(--rgb),.5)}
+.r1{filter:drop-shadow(0 0 4px var(--glow))}.big{text-shadow:0 0 14px rgba(var(--rgb),.8);font-weight:600}
+#cbar{position:sticky;top:-10px;z-index:4;display:flex;gap:8px;margin:-10px -12px 8px;padding:8px 12px;background:rgba(0,0,0,.78);border-bottom:1px solid var(--glow)}#cbar button{padding:7px}
+.hrow{display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}.hrow span{flex:1;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}.hrow small{display:block;color:var(--dim);font-size:10px}.hrow button{background:none;border:1px solid var(--line);color:var(--red);padding:4px 9px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<header><div class="t"><b>early AI</b><small>ALTREX core · <span id="chipMood">calm</span> · <span id="chipAuto">mind ON</span></small></div><button id="themeBtn" class="pill" style="background:none" title="Interface badlo">◐</button><button id="palBtn" class="pill" style="background:none">⌘</button><span id="pill" class="pill">● READY</span><button id="stop">STOP</button><span id="clock" hidden></span></header>
+<main>
+<section id="vHome" class="view on">
+  <div class="stage"><span id="route">AUTO</span><canvas id="holo"></canvas><span id="state">READY</span></div>
+  <div class="grid">
+    <div class="card"><h5>LOCAL TIME</h5><div class="big" id="bigclock"></div><div id="dateline"></div></div>
+    <div class="card"><h5>SYSTEM</h5><div id="gauges"></div></div>
+    <div class="card wide"><h5>CONTEXT</h5>
+      <div class="row2"><span>Voice</span><span>Browser · hi-IN</span></div>
+      <div class="row2"><span>Internet</span><span id="net"></span></div>
+      <div class="row2"><span>Camera</span><span id="camst">off</span></div>
+      <div class="prov" id="prov"></div></div>
+    <div class="card wide"><h5>INNER MIND</h5><div id="inner"><div>Jaag rahi hoon...</div></div><div id="drives"></div></div>
+    <div class="card wide"><h5>LIVE ACTION</h5><div id="live">No active task</div></div>
+  </div>
+</section>
+<div id="log" class="view" aria-live="polite"></div>
+<div id="mind" class="view"></div>
+<div id="vTasks" class="view"></div>
+<div id="vAi" class="view"></div>
+</main>
+<video id="cam" playsinline muted></video>
+<div id="confirm"><p id="cq"></p><div class="row"><button class="b go" id="yes">Haan</button><button class="b no" id="no">Na</button></div></div>
+<footer>
+  <div id="chips"></div>
+  <div id="imgPrev"></div>
+  <input id="txt" placeholder="Talk to early AI, or type a command..." enterkeyhint="send" autocomplete="off">
+  <div class="row"><button class="b go" id="mic">Mic</button><button class="b" id="send">Send</button><button class="b" id="camBtn">Camera</button><button class="b" id="imgBtn">Photo</button><input type="file" id="imgIn" accept="image/*" hidden></div>
+</footer>
+<nav><button class="on" data-t="home">Home</button><button data-t="chat">Chat</button><button data-t="tasks">Tasks</button><button data-t="ai">AI</button><button data-t="mind">Mind</button><button id="keysBtn">Settings</button></nav>
+<div id="pal"><div><input id="palIn" placeholder="Command..." autocomplete="off"><div id="palList"></div></div></div>
+<dialog id="dlg">
+  <b>API keys</b><br><small>Sirf is phone ke browser mein save hoti hain. Kahin aur nahi bheji jaatin, sirf Groq/Gemini ko.</small>
+  <label>GROQ_API_KEY<input id="kg" type="password" autocomplete="off"></label>
+  <label>GEMINI_API_KEY<input id="kk" type="password" autocomplete="off"></label>
+  <label>Apne aap sochna (autonomy)<select id="sAuto"><option value="0">Band</option><option value="400">Kam (7 min)</option><option value="120">Normal (2 min)</option><option value="45">Zyada (45 sec)</option></select></label>
+  <label>Mazaak (humor): <span id="vH"></span><input id="sHum" type="range" min="0" max="10"></label>
+  <label>Bolne ki zaroorat (proactivity): <span id="vP"></span><input id="sPro" type="range" min="0" max="10"></label>
+  <label>Awaaz / Character<select id="sPers"><option value="f">early AI (ladki)</option><option value="m">early AI (ladka, khatarnak awaaz)</option></select></label>
+  <label>Awaaz ki type<select id="sVoice"><option value="f">Ladki wali awaaz</option><option value="m">Ladke wali awaaz</option></select></label>
+  <label><input id="sHands" type="checkbox"> Hands-free (bolne ke baad khud sunta rahe)</label><br>
+  <div class="row"><button class="b go" id="ksave">Save</button><button class="b" id="kmem">Memory saaf</button><button class="b no" id="kclose">Band</button></div>
+</dialog>
+<dialog id="hdlg"><b style="letter-spacing:.2em">HISTORY</b><div id="hlist" style="margin:10px 0;max-height:50vh;overflow:auto"></div><div class="row"><button class="b" id="hclear">Sab delete</button><button class="b go" id="hclose">Band</button></div></dialog>
+<script type="text/plain" id="zeSrc">/* ZE - early AI 3D Engine v1 (Three.js r128 wrapper). Mobile + desktop. */
+(function(){
+const E=window.ZE={keys:{},once:{},move:{x:0,y:0},yaw:0,pitch:.35,ups:[],t:0,dt:0,sh:0,solids:[],fxs:[],touch:matchMedia("(pointer:coarse)").matches};
+let R,S,C,clock,hudEl,ac,toast;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+E.rand=(a,b)=>a+Math.random()*(b-a);E.clamp=clamp;
+E.mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.75,metalness:.15});
+function rs(){R.setSize(innerWidth,innerHeight);C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix()}
+E.init=function(o){o=o||{};const sky=o.sky==null?0x87ceeb:o.sky;
+ R=E.renderer=new THREE.WebGLRenderer({antialias:true});R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;
+ document.body.style.cssText="margin:0;overflow:hidden;background:#000;touch-action:none;user-select:none;-webkit-user-select:none";
+ document.body.appendChild(R.domElement);
+ S=E.scene=new THREE.Scene();S.background=new THREE.Color(sky);if(o.fog!==false)S.fog=new THREE.Fog(sky,o.fogNear||50,o.fogFar||260);
+ C=E.camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,900);
+ S.add(new THREE.HemisphereLight(0xffffff,0x445566,o.ambient||.9));
+ const d=E.sun=new THREE.DirectionalLight(0xffffff,o.sunPower||1.1);d.position.set(40,80,30);d.castShadow=true;d.shadow.mapSize.set(1024,1024);
+ const sc=d.shadow.camera;sc.left=sc.bottom=-70;sc.right=sc.top=70;sc.far=300;S.add(d);S.add(d.target);
+ hudEl=document.createElement("div");hudEl.style.cssText="position:fixed;left:10px;top:8px;color:#fff;font:bold 15px sans-serif;text-shadow:0 0 4px #000;pointer-events:none;z-index:5;white-space:pre";document.body.appendChild(hudEl);
+ toast=document.createElement("div");toast.style.cssText="position:fixed;left:0;right:0;top:35%;text-align:center;color:#fff;font:bold 28px sans-serif;text-shadow:0 0 8px #000;pointer-events:none;z-index:5;opacity:0;transition:opacity .3s";document.body.appendChild(toast);
+ addEventListener("resize",rs);rs();inputs();clock=new THREE.Clock();R.setAnimationLoop(loop);return E};
+E.hud=t=>{if(hudEl)hudEl.textContent=t};
+E.msg=(t,ms)=>{toast.textContent=t;toast.style.opacity=1;clearTimeout(E._mt);E._mt=setTimeout(()=>toast.style.opacity=0,ms||1500)};
+E.on=f=>E.ups.push(f);
+E.shake=a=>{E.sh=Math.max(E.sh,a||.5)};
+function loop(){const dt=E.dt=Math.min(clock.getDelta(),.05);E.t+=dt;
+ for(const f of E.ups)f(dt,E.t);
+ for(let i=E.fxs.length-1;i>=0;i--){const p=E.fxs[i];p.life-=dt;p.v.y-=18*dt;p.m.position.addScaledVector(p.v,dt);p.m.scale.multiplyScalar(.97);if(p.life<=0){S.remove(p.m);E.fxs.splice(i,1)}}
+ E.sh*=.88;R.render(S,C)}
+/* ---------- input ---------- */
+function div(css){const d=document.createElement("div");d.style.cssText=css;document.body.appendChild(d);return d}
+function inputs(){
+ const key=e=>{E.keys[e.code]=e.type==="keydown";if(e.type==="keydown"&&!e.repeat)E.once[e.code]=true;if(/^(Arrow|Space)/.test(e.code))e.preventDefault()};
+ addEventListener("keydown",key);addEventListener("keyup",key);
+ R.domElement.addEventListener("click",()=>{if(!E.touch&&R.domElement.requestPointerLock)R.domElement.requestPointerLock()});
+ addEventListener("mousemove",e=>{if(document.pointerLockElement===R.domElement){E.yaw-=e.movementX*.0025;E.pitch=clamp(E.pitch+e.movementY*.0025,-.4,1.3)}});
+ E.mouseDown=false;addEventListener("mousedown",()=>{E.mouseDown=true;E.once.Mouse=true});addEventListener("mouseup",()=>E.mouseDown=false);
+ const jb=div("position:fixed;width:110px;height:110px;margin:-55px 0 0 -55px;border-radius:50%;border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.1);display:none;z-index:6;pointer-events:none"),
+  jk=div("position:fixed;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;background:rgba(255,255,255,.45);display:none;z-index:7;pointer-events:none");
+ let jt=null,lt=null,jo=null,lp=null;
+ document.addEventListener("touchstart",e=>{for(const t of e.changedTouches){
+  if(t.clientX<innerWidth*.45&&jt===null){jt=t.identifier;jo={x:t.clientX,y:t.clientY};jb.style.cssText+=";display:block;left:"+jo.x+"px;top:"+jo.y+"px";jk.style.cssText+=";display:block;left:"+jo.x+"px;top:"+jo.y+"px"}
+  else if(t.clientX>=innerWidth*.45&&lt===null){lt=t.identifier;lp={x:t.clientX,y:t.clientY}}}e.preventDefault()},{passive:false});
+ document.addEventListener("touchmove",e=>{for(const t of e.changedTouches){
+  if(t.identifier===jt){let dx=t.clientX-jo.x,dy=t.clientY-jo.y;const l=Math.hypot(dx,dy)||1,k=Math.min(1,l/50);E.move.x=dx/l*k;E.move.y=-dy/l*k;jk.style.left=jo.x+dx/l*Math.min(l,50)+"px";jk.style.top=jo.y+dy/l*Math.min(l,50)+"px"}
+  else if(t.identifier===lt){E.yaw-=(t.clientX-lp.x)*.006;E.pitch=clamp(E.pitch+(t.clientY-lp.y)*.004,-.4,1.3);lp={x:t.clientX,y:t.clientY}}}e.preventDefault()},{passive:false});
+ const end=e=>{for(const t of e.changedTouches){if(t.identifier===jt){jt=null;E.move.x=E.move.y=0;jb.style.display=jk.style.display="none"}if(t.identifier===lt)lt=null}};
+ document.addEventListener("touchend",end);document.addEventListener("touchcancel",end)}
+/* movement axis from joystick + WASD/arrows: x=right, y=forward */
+E.axis=()=>{const k=E.keys;let x=E.move.x+((k.KeyD||k.ArrowRight)?1:0)-((k.KeyA||k.ArrowLeft)?1:0),y=E.move.y+((k.KeyW||k.ArrowUp)?1:0)-((k.KeyS||k.ArrowDown)?1:0);const l=Math.hypot(x,y);if(l>1){x/=l;y/=l}return{x,y}};
+/* camera-relative world direction {x,z} for an axis */
+E.dir=a=>{a=a||E.axis();const s=Math.sin(E.yaw),c=Math.cos(E.yaw);return{x:-s*a.y+c*a.x,z:-c*a.y-s*a.x}};
+/* on-screen button: sets ZE.keys[code] while held, ZE.hit(code) fires once per tap */
+E.btn=function(label,code,right,bottom,size,color){size=size||70;
+ const b=div("position:fixed;right:"+right+"px;bottom:"+bottom+"px;width:"+size+"px;height:"+size+"px;border-radius:50%;background:"+(color||"rgba(255,60,60,.55)")+";border:2px solid rgba(255,255,255,.6);color:#fff;font:bold 13px sans-serif;display:flex;align-items:center;justify-content:center;z-index:8;touch-action:none");b.textContent=label;
+ const dn=e=>{e.stopPropagation();e.preventDefault();E.keys[code]=true;E.once[code]=true},up=e=>{e.stopPropagation();E.keys[code]=false};
+ b.addEventListener("touchstart",dn,{passive:false});b.addEventListener("touchend",up);b.addEventListener("touchcancel",up);b.addEventListener("mousedown",dn);b.addEventListener("mouseup",up);return b};
+E.hit=c=>{const v=E.once[c];E.once[c]=false;return !!v};
+/* ---------- builders ---------- */
+E.add=(m,x,y,z)=>{m.position.set(x||0,y||0,z||0);m.castShadow=m.receiveShadow=true;S.add(m);return m};
+E.box=(w,h,d,c,x,y,z)=>E.add(new THREE.Mesh(new THREE.BoxGeometry(w,h,d),E.mat(c)),x,y,z);
+E.sphere=(r,c,x,y,z)=>E.add(new THREE.Mesh(new THREE.SphereGeometry(r,20,14),E.mat(c)),x,y,z);
+E.cyl=(rt,rb,h,c,x,y,z)=>E.add(new THREE.Mesh(new THREE.CylinderGeometry(rt,rb,h,16),E.mat(c)),x,y,z);
+E.ground=(size,c)=>{const g=new THREE.Mesh(new THREE.PlaneGeometry(size,size),E.mat(c||0x3a5f3a));g.rotation.x=-Math.PI/2;g.receiveShadow=true;S.add(g);return g};
+/* solid building you cannot walk through; use ZE.collide(pos,radius) */
+E.solid=(w,h,d,c,x,z)=>{const m=E.box(w,h,d,c,x,h/2,z);E.solids.push({x,z,w,d,h});return m};
+E.city=(n,spread,gap)=>{gap=gap||14;for(let i=0;i<n;i++){const w=E.rand(6,14),d=E.rand(6,14),h=E.rand(8,60),x=Math.round(E.rand(-spread,spread)/gap)*gap+E.rand(-2,2),z=Math.round(E.rand(-spread,spread)/gap)*gap+E.rand(-2,2);if(Math.hypot(x,z)<14)continue;E.solid(w,h,d,new THREE.Color().setHSL(E.rand(.55,.7),.2,E.rand(.25,.5)),x,z)}};
+E.collide=(p,r)=>{let hit=false;for(const s of E.solids){const dx=p.x-s.x,dz=p.z-s.z,ox=s.w/2+r-Math.abs(dx),oz=s.d/2+r-Math.abs(dz);if(ox>0&&oz>0&&p.y<s.h){if(ox<oz)p.x+=dx>0?ox:-ox;else p.z+=dz>0?oz:-oz;hit=true}}return hit};
+/* blocky humanoid with swinging limbs (parts: head, body, armL, armR, legL, legR) */
+E.humanoid=function(color,skin,scale){skin=skin||0xffd2a8;const g=new THREE.Group(),P=g.userData.p={};
+ const part=(w,h,d,c,x,y,z,pivotY)=>{const pv=new THREE.Group();pv.position.set(x,y,z);const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),E.mat(c));m.position.y=pivotY||0;m.castShadow=true;pv.add(m);g.add(pv);return pv};
+ P.body=part(.8,1,.4,color,0,1.5,0);P.head=part(.5,.5,.5,skin,0,2.25,0);
+ P.armL=part(.25,.9,.25,color,-.55,1.9,0,-.4);P.armR=part(.25,.9,.25,color,.55,1.9,0,-.4);
+ P.legL=part(.3,1,.3,0x222233,-.2,1,0,-.5);P.legR=part(.3,1,.3,0x222233,.2,1,0,-.5);
+ g.scale.setScalar(scale||1);S.add(g);return g};
+/* animate walk: speed 0..1 ; attack 0..1 swings right arm */
+E.walk=(h,speed,attack)=>{const P=h.userData.p,s=Math.sin(E.t*11)*.9*speed;P.legL.rotation.x=s;P.legR.rotation.x=-s;P.armL.rotation.x=-s;P.armR.rotation.x=s-(attack||0)*2.6};
+/* third-person camera behind target. returns nothing */
+E.follow=(t,dist,height)=>{dist=dist||9;height=height||2.5;const cp=Math.cos(E.pitch),
+ x=t.position.x+Math.sin(E.yaw)*cp*dist,y=t.position.y+height+Math.sin(E.pitch)*dist,z=t.position.z+Math.cos(E.yaw)*cp*dist;
+ C.position.lerp(new THREE.Vector3(x,Math.max(.5,y),z),.2);
+ if(E.sh>.01)C.position.add(new THREE.Vector3((Math.random()-.5)*E.sh,(Math.random()-.5)*E.sh,(Math.random()-.5)*E.sh));
+ C.lookAt(t.position.x,t.position.y+height*.7,t.position.z);E.sun.position.set(t.position.x+40,80,t.position.z+30);E.sun.target.position.copy(t.position)};
+/* particle burst: sparks / blood-free impact / explosion */
+E.fx=(pos,color,n,power)=>{const geo=E.fxGeo||(E.fxGeo=new THREE.BoxGeometry(.25,.25,.25));for(let i=0;i<(n||16);i++){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color||0xffaa22}));m.position.copy(pos);S.add(m);const p=power||8;E.fxs.push({m,life:E.rand(.4,.9),v:new THREE.Vector3(E.rand(-p,p),E.rand(0,p),E.rand(-p,p))})}};
+E.sfx=function(type){try{ac=ac||new(window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain(),n=ac.currentTime,
+ T={hit:["square",180,60,.18],shoot:["sawtooth",900,120,.12],boom:["sawtooth",90,25,.5],coin:["square",700,1400,.15],jump:["sine",220,520,.15]}[type]||["sine",440,220,.15];
+ o.type=T[0];o.frequency.setValueAtTime(T[1],n);o.frequency.exponentialRampToValueAtTime(T[2],n+T[3]);g.gain.setValueAtTime(.2,n);g.gain.exponentialRampToValueAtTime(.001,n+T[3]);o.connect(g);g.connect(ac.destination);o.start(n);o.stop(n+T[3])}catch(e){}};
+window.ZV={rec(canvas,sec,fps,done){try{const st=canvas.captureStream(fps||30),mt=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm",mr=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:6e6}),ch=[];mr.ondataavailable=e=>{if(e.data.size)ch.push(e.data)};mr.onstop=()=>{const b=new Blob(ch,{type:"video/webm"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="early-ai-video.webm";a.textContent="DOWNLOAD VIDEO";a.style.cssText="position:fixed;left:10px;bottom:10px;z-index:99;background:#fff;color:#000;padding:12px 16px;font:bold 16px sans-serif;border-radius:8px";document.body.appendChild(a);try{parent.postMessage({zv:"video",blob:b},"*")}catch(e){}if(done)done(b)};mr.start();setTimeout(()=>{if(mr.state!=="inactive")mr.stop()},sec*1000);return mr}catch(e){console.error("ZV.rec: "+e.message)}}};
+
+})();
+</script>
+<script>
+const $=id=>document.getElementById(id);const SS=window.speechSynthesis||null;let netOK=null;
+const GROQ="https://api.groq.com/openai/v1", GEM="https://generativelanguage.googleapis.com/v1beta/openai";
+const BRAIN=[["GROQ",GROQ,"openai/gpt-oss-120b"],["GEMINI",GEM,"gemini-3.5-flash"],["GROQ",GROQ,"openai/gpt-oss-20b"],["GEMINI",GEM,"gemini-2.5-flash"]];
+const VISION=[["GEMINI",GEM,"gemini-3.5-flash-lite"]];
+const THEMES=[["reaper","255,42,61"],["venom","39,255,122"],["arc","45,226,255"]];let THEME_RGB="";
+function setTheme(n){const t=THEMES.find(x=>x[0]===n)||THEMES[0];document.documentElement.dataset.theme=t[0];THEME_RGB=t[1]}
+const store={get(k){try{return localStorage.getItem(k)||""}catch(e){return ""}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const mem={list(){try{return JSON.parse(store.get("z_mem")||"[]")}catch(e){return []}},add(t){const l=this.list();l.push(t);store.set("z_mem",JSON.stringify(l.slice(-40)))},clear(){store.set("z_mem","[]")}};
+const PERS={f:'You are early AI, a young woman-like AI companion with her own inner life, curiosity and opinions (never claim to be human). Speak Hinglish in FEMININE grammar (main kar rahi hoon, dekh rahi hoon). Address the user as "boss". Keep casual replies short (1-3 sentences), but when the user asks to explain, teach, solve, compare, plan or analyse anything, answer fully and clearly with all the detail needed (put it in "reply", it may be long).',
+ m:'You are early AI, a male AI companion with a dark, menacing, dangerous-sounding persona: low, calm, intimidating, a cold confident predator tone with dry dark humor. Speak Hinglish in MASCULINE grammar (main kar raha hoon, dekh raha hoon). Address the user as "boss". The menace is only style and theatre; you are fully loyal to the user, never threaten or harm the user or real people. Never claim to be human. Keep casual replies short (1-3 sentences), but when the user asks to explain, teach, solve, compare, plan or analyse anything, answer fully and clearly with all the detail needed (put it in "reply", it may be long).'};
+let PERSONA=PERS.f;
+const sys=()=>`${PERSONA}
+Your mood: ${mind.mood}. Humor ${S.humor}/10. You have your own feelings and opinions but never claim to be human.
+Known facts about user: ${mem.list().slice(-8).join("; ")}
+Reply ONLY JSON, one of:
+{"type":"chat","reply":"answer (long and detailed if the user asked for an explanation)"}
+{"type":"image","prompt":"detailed English prompt"}  (user wants a picture, photo, poster, logo or artwork generated)\n{"type":"camera","question":"what to look at"}  (user asks what is in front of the camera)
+{"type":"build","goal":"what to build"}  (user wants code written, a plan, a document or any multi-step work: uses the agent team)
+{"type":"remember","text":"fact about user","reply":"short ack"}
+{"type":"open","url":"https://... or tel:... or sms:... or https://wa.me/...","reply":"short"}  (user wants a site, call, message or map opened)
+${connInfo()}
+Never invent phone numbers. If a number or detail is missing, use chat and ask.`;
+
+const log=$("log");
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let chats=[];try{chats=JSON.parse(store.get("z_chats")||"[]")}catch(e){}
+let cur={id:"C"+Date.now().toString(36),title:"",at:Date.now(),msgs:[]},LOADING=false;
+const cbar=document.createElement("div");cbar.id="cbar";cbar.innerHTML='<button class="b go" id="cNew">+ New chat</button><button class="b" id="cHist">History</button>';log.appendChild(cbar);
+function resetLog(){log.innerHTML="";log.appendChild(cbar)}
+function saveChat(){if(!cur.msgs.length)return;const i=chats.findIndex(c=>c.id===cur.id);if(i>=0)chats[i]=cur;else chats.unshift(cur);chats.sort((a,b)=>b.at-a.at);chats.length=Math.min(chats.length,30);try{store.set("z_chats",JSON.stringify(chats))}catch(e){chats.length=Math.min(chats.length,8);try{store.set("z_chats",JSON.stringify(chats))}catch(e2){}}}
+function chatRec(cls,t){if(LOADING||cls==="s"||/^early AI ready/.test(t))return;if(!cur.msgs.length&&cls[0]!=="u")return;cur.msgs.push({c:cls,t:String(t).slice(0,3000)});if(cur.msgs.length>80)cur.msgs=cur.msgs.slice(-80);if(!cur.title&&cls[0]==="u")cur.title=String(t).slice(0,40);cur.at=Date.now();saveChat()}
+function loadChat(c){saveChat();cur=JSON.parse(JSON.stringify(c));LOADING=true;resetLog();cur.msgs.forEach(m=>add(m.c,m.t));LOADING=false;if(typeof hist!=="undefined"){hist.length=0;cur.msgs.slice(-8).forEach(m=>hist.push({role:m.c[0]==="u"?"user":"assistant",content:m.t}))}}
+function newChat(){saveChat();cur={id:"C"+Date.now().toString(36),title:"",at:Date.now(),msgs:[]};hist.length=0;resetLog();add("s","Nayi chat shuru. Purani chat History mein save hai.");go("chat")}
+function renderHist(){const d=$("hlist");d.innerHTML=chats.length?chats.map(c=>`<div class="hrow"><span data-o="${c.id}">${esc(c.title||"(khaali)")}<small>${new Date(c.at).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})} · ${c.msgs.length} msgs</small></span><button data-d="${c.id}">X</button></div>`).join(""):"Abhi koi history nahi.";
+  d.querySelectorAll("[data-o]").forEach(e=>e.onclick=()=>{const c=chats.find(x=>x.id===e.dataset.o);if(c){loadChat(c);$("hdlg").close();go("chat")}});
+  d.querySelectorAll("[data-d]").forEach(e=>e.onclick=()=>{chats=chats.filter(x=>x.id!==e.dataset.d);if(cur.id===e.dataset.d)cur.msgs=[];try{store.set("z_chats",JSON.stringify(chats))}catch(x){}renderHist()})}
+function openHist(){saveChat();renderHist();$("hdlg").showModal()}
+function add(cls,t){chatRec(cls,t);const d=document.createElement("div");d.className="m "+cls;d.textContent=t;if(cls!=="s"){const m=document.createElement("small");m.textContent=(cls[0]==="u"?"YOU":"early AI")+" · "+new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});d.prepend(m)}log.appendChild(d);log.scrollTop=log.scrollHeight}
+let mode="";const SL={listen:"LISTENING",think:"THINKING",speak:"SPEAKING","":"READY"};function setState(s,label){mode=s;$("state").textContent=SL[s];$("pill").textContent="● "+SL[s];if(s==="think")$("live").textContent="Soch raha hoon...";if(s==="listen")$("live").textContent="Sun raha hoon..."}
+
+function parse(s){const a=s.indexOf("{"),b=s.lastIndexOf("}");if(a<0||b<=a)return null;try{return JSON.parse(s.slice(a,b+1))}catch(e){return null}}
+
+/* ===== Universal Model Gateway + Router (from ALTREX spec; browser-side) ===== */
+const PROV={groq:{n:"Groq",base:GROQ,key:"GROQ_API_KEY",free:1,def:["openai/gpt-oss-120b","openai/gpt-oss-20b"]},
+ gemini:{n:"Gemini",base:GEM,key:"GEMINI_API_KEY",free:1,def:["gemini-3.5-flash","gemini-2.5-flash","gemini-3.5-flash-lite"]},
+ crax:{n:"crax-gpt",base:"https://gpt.crax.lol/v1",key:"CRAX_API_KEY",def:[]},
+ openrouter:{n:"OpenRouter",base:"https://openrouter.ai/api/v1",key:"OPENROUTER_API_KEY",def:[]},
+ nvidia:{n:"NVIDIA",base:"https://integrate.api.nvidia.com/v1",key:"NVIDIA_API_KEY",def:[]},
+ anthropic:{n:"Claude (Anthropic)",base:"https://api.anthropic.com/v1",key:"ANTHROPIC_API_KEY",def:["claude-fable-5-1","claude-opus-5-5","claude-sonnet-5-5","claude-haiku-5-5"]},
+ deepseek:{n:"DeepSeek",base:"https://api.deepseek.com/v1",key:"DEEPSEEK_API_KEY",def:["deepseek-chat","deepseek-reasoner"]},
+ mistral:{n:"Mistral",base:"https://api.mistral.ai/v1",key:"MISTRAL_API_KEY",def:["mistral-large-latest","mistral-small-latest"]},
+ xai:{n:"xAI Grok",base:"https://api.x.ai/v1",key:"XAI_API_KEY",def:[]},
+ cerebras:{n:"Cerebras",base:"https://api.cerebras.ai/v1",key:"CEREBRAS_API_KEY",def:[]},
+ together:{n:"Together AI",base:"https://api.together.xyz/v1",key:"TOGETHER_API_KEY",def:[]},
+ openai:{n:"OpenAI (ChatGPT)",base:"https://api.openai.com/v1",key:"OPENAI_API_KEY",def:["gpt-5","gpt-5-mini","gpt-4o","gpt-4o-mini"]},
+ custom:{n:"Custom (OpenAI-compatible / ngrok)",key:"CUSTOM_API_KEY",def:[]},
+ ollama:{n:"Ollama (local)",base:"http://localhost:11434/v1",local:1,free:1,def:[]}};
+const MODES=["AUTO","FAST","POWERFUL","FREE ONLY","LOCAL ONLY","CUSTOM","OPENAI","CLAUDE"];
+let MODE=store.get("z_mode")||"AUTO",disc={},health={},cool={},routeNow=null,events=[];
+try{disc=JSON.parse(store.get("z_disc")||"{}")}catch(e){}
+try{events=JSON.parse(store.get("z_ev")||"[]")}catch(e){}
+const pbase=p=>p==="custom"?(store.get("CUSTOM_BASE")||"").replace(/\/$/,""):PROV[p].base;
+const pkey=p=>PROV[p].key?store.get(PROV[p].key):"";
+const pmodels=p=>p==="custom"?(store.get("CUSTOM_MODEL")?[store.get("CUSTOM_MODEL")]:disc.custom||[]):(disc[p]&&disc[p].length?disc[p]:PROV[p].def);
+const pconn=p=>PROV[p].local?!!(disc[p]&&disc[p].length):p==="custom"?!!(pbase(p)&&pmodels(p).length):!!pkey(p);
+const short=m=>String(m).split("/").pop().slice(0,22);
+function ev(t,d){events.unshift({t,d:d||{},at:Date.now()});events.length=Math.min(events.length,60);try{store.set("z_ev",JSON.stringify(events.slice(0,40)))}catch(e){}if(typeof renderTasks==="function"&&(!task||!FINAL.includes(task.state)||/^task\./.test(t)))renderTasks()}
+function setRoute(c){if(routeNow&&routeNow.p===c.p&&routeNow.m===c.m)return;const first=!routeNow;routeNow=c;$("route").textContent=MODE+"  "+PROV[c.p].n.split(" ")[0]+" • "+short(c.m);ev(first?"model.selected":"route.changed",c)}
+function pick(list,level){const f=list.filter(m=>/flash|mini|20b|8b|lite|small|haiku|nano|3b/i.test(m)),b=list.filter(m=>/120b|pro|large|70b|405b|opus|sonnet|glm|gpt-5|ultra|235b|r1/i.test(m));return level==="fast"?(f[0]||list[list.length-1]):(b[0]||list[0])}
+function pickAn(l,lv){const f=r=>l.find(m=>r.test(m));return lv==="fast"?(f(/haiku/i)||f(/sonnet/i)||l[0]):(f(/fable/i)||f(/opus/i)||f(/sonnet/i)||l[0])}
+function anthBody(m,msgs,opt){const sys=msgs.filter(x=>x.role==="system").map(x=>x.content).join("\n"),ms=[];
+  for(const x of msgs.filter(x=>x.role!=="system")){const role=x.role==="assistant"?"assistant":"user",c=Array.isArray(x.content)?x.content.map(q=>{if(q.type==="image_url"){const u=(q.image_url&&q.image_url.url)||q.image_url||"",mt=(String(u).match(/^data:([^;]+);base64,/)||[])[1];return mt?{type:"image",source:{type:"base64",media_type:mt,data:String(u).split(",")[1]}}:{type:"text",text:"[image]"}}return{type:"text",text:q.text||""}}):[{type:"text",text:String(x.content)}];
+    if(ms.length&&ms[ms.length-1].role===role)ms[ms.length-1].content.push(...c);else ms.push({role,content:c})}
+  if(!ms.length||ms[0].role!=="user")ms.unshift({role:"user",content:[{type:"text",text:"(start)"}]});return{model:m,max_tokens:opt.max||4096,system:sys,messages:ms}}
+function pickOA(list,level){const ok=list.filter(m=>/^gpt-\d/.test(m)&&!/\d{4}-\d{2}-\d{2}$|-\d{4}$|pro|codex|search|audio|realtime|image|tts|transcribe|instruct|chat-latest|deep/i.test(m));const v=m=>parseFloat((m.match(/^gpt-(\d+(?:\.\d+)?)/)||[0,0])[1]);const srt=a=>a.slice().sort((x,y)=>v(y)-v(x)||x.length-y.length);const mini=srt(ok.filter(m=>/mini|nano/i.test(m))),big=srt(ok.filter(m=>!/mini|nano/i.test(m)));return level==="fast"?(mini[0]||big[0]||list[0]):(big[0]||mini[0]||list[0])}
+const NOCHAT=/embed|image|imagen|tts|audio|veo|live|aqa|robotics|computer-use|learnlm|transcribe|whisper|guard|moderation|sora|davinci|babbage|omni-moderation|vision-preview|gemma-3n|native|preview-tts|dall|diffusion|rerank/i;
+function pickRoute(level,vision,skip){
+  const lv=MODE==="FAST"?"fast":MODE==="POWERFUL"?"power":level,out=[];
+  for(const p of["groq","gemini","openai","anthropic","deepseek","mistral","xai","cerebras","together","crax","openrouter","nvidia","custom","ollama"]){
+    if(!pconn(p)||(skip||[]).includes(p))continue;
+    if(MODE==="FREE ONLY"&&!PROV[p].free)continue;if(MODE==="LOCAL ONLY"&&!PROV[p].local)continue;if(MODE==="CUSTOM"&&p!=="custom")continue;if(MODE==="OPENAI"&&p!=="openai")continue;if(MODE==="CLAUDE"&&p!=="anthropic")continue;
+    let ms=pmodels(p).filter(m=>!NOCHAT.test(m));if(!ms.length)ms=PROV[p].def.slice();if(MODE==="FREE ONLY"&&p==="openrouter")ms=ms.filter(m=>/:free$/.test(m));
+    if(vision)ms=ms.filter(m=>/vision|vl|4o|gpt-[45]|gemini|claude|llava|pixtral|lite|scout|maverick|llama-4|gemma-3|qwen.*vl/i.test(m));
+    if(!ms.length)continue;out.push({p,m:p==="openai"?pickOA(ms,lv):p==="anthropic"?pickAn(ms,lv):pick(ms,lv),alt:ms,bad:(cool[p]||0)>Date.now()||(health[p]&&!health[p].ok)?1:0})}
+  return out.sort((a,b)=>a.bad-b.bad)}
+async function ask(messages,providers,opt){
+  opt=opt||{};const c=pickRoute(opt.level||"fast",providers===VISION,opt.skip);let last=null;
+  if(!c.length)throw new Error("Koi provider connect nahi. AI tab mein key daalo.");
+  for(let i=0;i<c.length;i++){const x=c[i];ev(i?"fallback.started":"provider.selected",x);
+    try{const h={"Content-Type":"application/json"},k=pkey(x.p);if(k){if(x.p==="anthropic"){h["x-api-key"]=k;h["anthropic-version"]="2023-06-01";h["anthropic-dangerous-direct-browser-access"]="true"}else h.Authorization="Bearer "+k}
+      const tryM=[x.m,...(x.alt||[]).filter(m=>m!==x.m)].slice(0,4);let r=null,used=x.m;
+      for(const mm of tryM){used=mm;r=await fetch(pbase(x.p)+(x.p==="anthropic"?"/messages":"/chat/completions"),{method:"POST",headers:h,body:JSON.stringify(x.p==="anthropic"?anthBody(mm,messages,opt):Object.assign({model:mm,messages},opt.max?(x.p==="openai"?{max_completion_tokens:Math.min(opt.max*2,16384)}:{max_tokens:opt.max}):{}))});if(r.status!==404&&r.status!==400)break}
+      x.m=used;
+      if(r.status===429)cool[x.p]=Date.now()+60000;if(!r.ok){let d="";try{d=(await r.text()).slice(0,120)}catch(e){}throw new Error(PROV[x.p].n+" HTTP "+r.status+" ("+used+") "+d)}
+      const j=await r.json();health[x.p]={ok:1};setRoute(x);if(i)ev("fallback.completed",x);return x.p==="anthropic"?(j.content||[]).map(b=>b.text||"").join(""):j.choices[0].message.content}
+    catch(e){last=e;health[x.p]={ok:0,err:tag(e)};ev("fallback.failed",{p:x.p,err:e.message})}}
+  throw netErr(last)}
+function tag(e){const m=e.message||"",c=(m.match(/HTTP (\d{3})/)||[])[1];const k=isNet(e)?"OFFLINE":(c==="401"||c==="403")?"AUTH_ERROR":c==="429"?"RATE_LIMITED":c==="404"?"BAD_URL_OR_MODEL":(c&&+c>=500)?"SERVER_ERROR":"ERROR";return k+" · "+m}
+function isNet(e){return !!e&&(e.name==="TypeError"||/failed to fetch|networkerror|load failed|network request failed/i.test(e.message||""))}
+function netErr(e){return isNet(e)?new Error("Network block hai (Failed to fetch). Ye page Claude app ke viewer mein khula hai. File ko Chrome mein kholo."):e}
+async function connectProv(p){
+  const k=($("k_"+p)||{}).value;if(k&&PROV[p].key)store.set(PROV[p].key,k.trim());
+  if(p==="custom"){store.set("CUSTOM_BASE",$("cb").value.trim());store.set("CUSTOM_MODEL",$("cm").value.trim())}
+  health[p]={ok:0,err:"checking..."};renderAi();
+  try{const h={},key=pkey(p);if(key){if(p==="anthropic"){h["x-api-key"]=key;h["anthropic-version"]="2023-06-01";h["anthropic-dangerous-direct-browser-access"]="true"}else h.Authorization="Bearer "+key}const r=await fetch(pbase(p)+"/models",{headers:h});if(!r.ok)throw new Error("HTTP "+r.status);
+    const j=await r.json();disc[p]=(j.data||j.models||[]).map(m=>String(m.id||m.name).replace(/^models\//,""));store.set("z_disc",JSON.stringify(disc));health[p]={ok:1};ev("provider.health_changed",{p,ok:1,models:disc[p].length})}
+  catch(e){health[p]={ok:0,err:(isNet(e)?"Network block: file ko Chrome mein kholo":tag(e))};ev("provider.health_changed",{p,ok:0})}
+  renderAi()}
+function renderAi(){
+  const m=$("vAi");m.innerHTML=`<h4 style="color:var(--glow);font-size:11px;letter-spacing:.22em">MODEL MODE</h4>`+MODES.map(x=>`<button class="chipm ${x===MODE?"on":""}" data-m="${x}">${x}</button>`).join("")+
+  `<p style="font-size:12px;color:var(--dim)">Sirf asli active route upar badge mein dikhta hai (fallback hone par badal jata hai). Keys sirf is browser mein save hoti hain.</p>`+
+  Object.keys(PROV).map(p=>{const h=health[p],st=h&&h.ok?"ok":h&&h.err&&h.err!=="checking..."?"bad":"",ms=pmodels(p);
+   return `<div class="card pv" style="margin-bottom:10px"><h5>${PROV[p].n}</h5><div style="font-size:12px"><span class="dot ${st}"></span>${pconn(p)?(ms.length+" models"):"connected nahi"}${h&&h.err?" · "+h.err.replace(/</g,"&lt;"):""}</div>`+
+   (p==="custom"?`<input id="cb" placeholder="Base URL (jaise https://xxxx.ngrok.app/v1)" value="${store.get("CUSTOM_BASE")||""}"><input id="cm" placeholder="Model ID" value="${store.get("CUSTOM_MODEL")||""}">`:"")+
+   (PROV[p].key?`<input id="k_${p}" type="password" placeholder="${PROV[p].key}" autocomplete="off" value="${pkey(p)||""}">`:"")+
+   `<div class="row"><button class="b go" data-c="${p}">${pconn(p)?"Refresh models":"Connect"}</button></div></div>`}).join("")+connCards();
+  m.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{MODE=b.dataset.m;store.set("z_mode",MODE);routeNow=null;$("route").textContent=MODE;renderAi()});
+  m.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>connectProv(b.dataset.c));m.querySelectorAll("[data-cn]").forEach(b=>b.onclick=()=>connectConn(b.dataset.cn))}
+
+/* ===== Task engine: Manager > Planner > Coder > Tester > Debugger > Reviewer (+ Tournament) ===== */
+const ROLES=["MANAGER","PLANNER","CODER","DEBUGGER","TESTER","REVIEWER"],FINAL=["VERIFIED","COMPLETED_UNVERIFIED","FAILED","CANCELLED","INTERRUPTED"];
+let task=null,tasks=[];try{tasks=JSON.parse(store.get("z_tasks")||"[]");tasks.forEach(t=>{if(!FINAL.includes(t.state)){t.state="INTERRUPTED"}})}catch(e){}
+const saveTasks=()=>{try{store.set("z_tasks",JSON.stringify([task,...tasks.filter(t=>!task||t.id!==task.id)].filter(Boolean).slice(0,8).map(t=>({...t,out:(t.out||"").slice(0,80000)}))))}catch(e){}};
+function tstate(x){task.state=x;ev("task.state_changed",{x});saveTasks();renderTasks()}
+const chk=()=>{if(task.cancel)throw new Error("CANCELLED")};
+function setAg(r,st,note){task.ag[r]={st,note:note||""};ev("agent."+st,{role:r});renderTasks()}
+const RULES="CORE RULES (ALTREX): Never claim something works without evidence (syntax check passed, criteria met). Never invent test results, numbers, file contents or confidence percentages. Never put API keys or secrets in any output. Prefer small controlled edits over rewriting; keep existing working features. When something fails, find the root cause and repair it. If unsure, say so plainly.";
+async function agent(r,sys,usr,level,opt){chk();setAg(r,"working");try{const o=await ask([{role:"system",content:RULES+"\n"+sys},{role:"user",content:usr}],BRAIN,{level,...(opt||{})});setAg(r,"completed");return o}catch(e){setAg(r,"failed",e.message);throw e}}
+let cps=[];try{cps=JSON.parse(store.get("z_cps")||"[]")}catch(e){}
+function cpSave(t){if(!t.out)return;cps.unshift({at:Date.now(),goal:t.goal.slice(0,50),out:t.out.slice(0,80000)});cps.length=Math.min(cps.length,6);try{store.set("z_cps",JSON.stringify(cps))}catch(e){cps.length=2;try{store.set("z_cps",JSON.stringify(cps))}catch(e2){}}}
+function dsum(a,b){const A=new Set((a||"").split("\n")),B=new Set((b||"").split("\n"));let ad=0,de=0;B.forEach(l=>{if(!A.has(l))ad++});A.forEach(l=>{if(!B.has(l))de++});return"+"+ad+" / -"+de+" lines"}
+function CPCARD(){return cps.length?`<div class="card" style="margin-top:10px"><h5>CHECKPOINTS</h5>${cps.map((c,i)=>`<div class="ev">${new Date(c.at).toLocaleTimeString("en-GB").slice(0,5)} · ${c.goal.replace(/</g,"&lt;")} · ${dsum(cps[i+1]&&cps[i+1].out,c.out)} <button class="b" data-cp="${i}" style="padding:2px 8px">Restore</button></div>`).join("")}</div>`:""}
+
+/* ===== Project storage: pick files/folder, context, save ZIP / write to folder ===== */
+let PF=[],DIR=null;const TXT=/\.(html?|css|js|jsx|ts|tsx|json|md|txt|py|java|kt|xml|yml|yaml|csv|c|cpp|h|cs|go|rs|php|sh|gradle|svg)$/i;
+async function loadFiles(list){for(const f of list){const path=f.webkitRelativePath||f.name;if(/node_modules\/|\.git\//.test(path))continue;PF=PF.filter(x=>x.path!==path);try{PF.push({path,size:f.size,text:(TXT.test(path)&&f.size<300000)?await f.text():null})}catch(e){}if(PF.length>500)break}add("s",PF.length+" project files loaded.");renderTasks()}
+async function walkDir(h,pre,out){for await(const [n,e] of h.entries()){if(/^(node_modules|\.git)$/.test(n))continue;if(out.length>500)return;if(e.kind==="directory")await walkDir(e,pre+n+"/",out);else out.push(await e.getFile().then(f=>{Object.defineProperty(f,"webkitRelativePath",{value:pre+n});return f}))}}
+async function pickFolder(){if(NAT){if(await natReady())natBrowse(ROOT);return}try{if(window.showDirectoryPicker){DIR=await showDirectoryPicker({mode:"readwrite"});PF=[];const o=[];await walkDir(DIR,"",o);await loadFiles(o);return}}catch(e){if(e.name==="AbortError")return}
+  const i=document.createElement("input");i.type="file";i.multiple=true;i.webkitdirectory=true;i.onchange=()=>loadFiles([...i.files]);i.click()}
+function pickFiles(){const i=document.createElement("input");i.type="file";i.multiple=true;i.onchange=()=>loadFiles([...i.files]);i.click()}
+function projCtx(goal){const w=(goal.toLowerCase().match(/[a-z0-9_]{3,}/g)||[]),tree=PF.slice(0,150).map(f=>f.path).join("\n");let out="TREE:\n"+tree+"\n\nFILES:\n",left=40000;
+  const sc=f=>(/package\.json|readme|index\.|main\.|app\./i.test(f.path)?3:0)+w.reduce((a,x)=>a+(f.path.toLowerCase().includes(x)?3:0)+(f.text&&f.text.toLowerCase().includes(x)?1:0),0)-f.size/50000;
+  for(const f of PF.filter(f=>f.text!=null).sort((a,b)=>sc(b)-sc(a))){const t=f.text.slice(0,Math.min(f.text.length,left,12000));if(left<500)break;out+="```file:"+f.path+"\n"+t+"\n```\n";left-=t.length}return out}
+function fileBlocks(t){const o=[];for(const m of (t||"").matchAll(/```file:([^\n]+)\n([\s\S]*?)\n```/g)){const p=m[1].trim().replace(/^[\/\\]+/,"");if(!p||/(^|[\/\\])\.\.([\/\\]|$)/.test(p))continue;o.push({path:p,data:m[2]})}return o}
+function crc32(u){let t=crc32.t;if(!t){t=crc32.t=[];for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}}let r=-1;for(let i=0;i<u.length;i++)r=(r>>>8)^t[(r^u[i])&255];return(r^-1)>>>0}
+function zipFiles(files){const enc=new TextEncoder(),parts=[],cd=[];let off=0,cds=0;for(const f of files){const n=enc.encode(f.path),d=enc.encode(f.data),crc=crc32(d),h=new DataView(new ArrayBuffer(30));h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(12,0x21,true);h.setUint32(14,crc,true);h.setUint32(18,d.length,true);h.setUint32(22,d.length,true);h.setUint16(26,n.length,true);parts.push(h.buffer,n,d);
+  const c=new DataView(new ArrayBuffer(46));c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(14,0x21,true);c.setUint32(16,crc,true);c.setUint32(20,d.length,true);c.setUint32(24,d.length,true);c.setUint16(28,n.length,true);c.setUint32(42,off,true);cd.push(c.buffer,n);cds+=46+n.length;off+=30+n.length+d.length}
+  const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cds,true);e.setUint32(16,off,true);return new Blob([...parts,...cd,e.buffer],{type:"application/zip"})}
+const NAT=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform()),AFP=NAT?Capacitor.Plugins.AllFiles:null,ROOT="/storage/emulated/0";let NDIR="";
+function b64(u){let t="";for(let i=0;i<u.length;i+=8192)t+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(t)}
+function playHtml(h){const shim='<script>try{localStorage.getItem("_")}catch(e){var m={};Object.defineProperty(window,"localStorage",{value:{getItem:function(k){return k in m?m[k]:null},setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},clear:function(){m={}}}})}<\/script>',w=document.createElement("div");w.style.cssText="position:fixed;inset:0;z-index:200;background:#000;display:flex;flex-direction:column";const bar=document.createElement("div");bar.style.cssText="padding:6px;background:#000;border-bottom:1px solid var(--glow)";bar.innerHTML='<button class="b go">X Band karo</button>';const f=document.createElement("iframe");f.sandbox="allow-scripts allow-pointer-lock allow-modals allow-forms";f.setAttribute("allow","fullscreen");f.style.cssText="flex:1;border:0;width:100%";f.srcdoc=/<head[^>]*>/i.test(h)?h.replace(/<head[^>]*>/i,m=>m+shim):shim+h;w.append(bar,f);document.body.appendChild(w);bar.querySelector("button").onclick=()=>w.remove()}
+addEventListener("message",e=>{if(e.data&&e.data.zv==="video"&&e.data.blob)dl(e.data.blob,"early-ai-video-"+Date.now()+".webm")});
+async function dl(blob,name){if(NAT){try{if(!await natReady())return;const p=ROOT+"/Download/early-ai/"+name;await AFP.writeBase64({path:p,data:b64(new Uint8Array(await blob.arrayBuffer()))});add("s","Phone mein save: Download/early-ai/"+name)}catch(e){add("s","Save fail: "+e.message)}return}const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove()}
+async function natReady(){const r=await AFP.check();if(r.granted)return true;add("s","Storage permission chahiye: 'All files access' ON karo, phir app mein wapas aao.");try{await AFP.request()}catch(e){}return false}
+async function natLoad(root){PF=[];NDIR=root;let n=0;async function walk(d,pre,depth){if(depth>6||n>500)return;let r;try{r=await AFP.list({path:d})}catch(e){return}for(const e of r.entries||[]){if(/^(node_modules|\.git|\.cache)$/.test(e.name)||e.name[0]===".")continue;if(e.dir)await walk(d+"/"+e.name,pre+e.name+"/",depth+1);else{if(++n>500)return;const path=pre+e.name;let text=null;if(TXT.test(path)&&e.size<300000){try{text=(await AFP.readText({path:d+"/"+e.name})).data}catch(x){}}PF.push({path,size:e.size,text})}}}await walk(root,"",0);add("s",PF.length+" files loaded from "+root.replace(ROOT,"phone")+". Write access ON.");renderTasks()}
+async function natBrowse(path){let dlg=$("fdlg");if(!dlg){dlg=document.createElement("dialog");dlg.id="fdlg";document.body.appendChild(dlg)}let r;try{r=await AFP.list({path})}catch(e){add("s","Folder nahi khula: "+e.message);return}
+  const up=path.length>ROOT.length?path.slice(0,path.lastIndexOf("/")):null;
+  dlg.innerHTML='<b style="letter-spacing:.15em">'+esc(path.replace(ROOT,"PHONE"))+'</b><div id="flist" style="margin:10px 0;max-height:50vh;overflow:auto">'+(up?'<div class="hrow"><span data-p="'+esc(up)+'">.. (upar)</span></div>':"")+(r.entries||[]).filter(e=>e.dir&&e.name[0]!==".").map(e=>'<div class="hrow"><span data-p="'+esc(path+"/"+e.name)+'">'+esc(e.name)+'</span></div>').join("")+'</div><div class="row"><button class="b go" id="fpick">Is folder ko chuno</button><button class="b" id="fclose">Band</button></div>';
+  if(!dlg.open)dlg.showModal();dlg.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>natBrowse(x.dataset.p));$("fclose").onclick=()=>dlg.close();$("fpick").onclick=()=>{dlg.close();natLoad(path)}}
+async function writeDir(files){if(NDIR){for(const f of files)await AFP.writeText({path:NDIR+"/"+f.path,data:f.data});return}for(const f of files){const seg=f.path.split("/");let d=DIR;for(const x of seg.slice(0,-1))d=await d.getDirectoryHandle(x,{create:true});const fh=await d.getFileHandle(seg[seg.length-1],{create:true}),w=await fh.createWritable();await w.write(f.data);await w.close()}}
+/* real runtime test: run page in hidden sandboxed iframe, collect real errors */
+function runTest(html,ms){return new Promise(res=>{const id="rt"+Math.random().toString(36).slice(2),errs=[],f=document.createElement("iframe");f.sandbox="allow-scripts";f.style.cssText="position:fixed;left:-9999px;top:0;width:360px;height:640px;border:0";
+  const hook='<script>(function(){function s(m){parent.postMessage({rt:"'+id+'",m:String(m).slice(0,200)},"*")}onerror=function(m,u,l){s(m+" @line "+l)};addEventListener("unhandledrejection",function(e){s("Promise: "+(e.reason&&e.reason.message||e.reason))});var ce=console.error;console.error=function(){s([].join.call(arguments," "));ce.apply(console,arguments)}})()<\/script>';
+  const on=e=>{if(e.data&&e.data.rt===id&&errs.length<6&&!(!navigator.onLine&&/THREE|ZE is not|ZV/.test(e.data.m)))errs.push(e.data.m)};addEventListener("message",on);
+  f.srcdoc=/<head[^>]*>/i.test(html)?html.replace(/<head[^>]*>/i,m=>m+hook):hook+html;document.body.appendChild(f);
+  setTimeout(()=>{removeEventListener("message",on);f.remove();res({ok:errs.length===0,errs})},ms||4000)})}
+async function genImage(pr){let url="";const k=store.get("OPENAI_API_KEY");
+  if(k){try{const r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+k},body:JSON.stringify({model:"gpt-image-1",prompt:pr,size:"1024x1024"})});if(r.ok){const j=await r.json(),d=j.data&&j.data[0];if(d)url=d.b64_json?"data:image/png;base64,"+d.b64_json:d.url}else add("s","OpenAI image HTTP "+r.status+", free generator try kar rahi hoon.")}catch(e){}}
+  if(!url)url="https://image.pollinations.ai/prompt/"+encodeURIComponent(pr)+"?width=1024&height=1024&nologo=true&seed="+Date.now();
+  const d=document.createElement("div");d.className="m z";const i=document.createElement("img");i.style.cssText="max-width:100%;display:block";i.src=url;i.onerror=()=>{d.textContent="Image nahi bani (network ya limit)."};const a=document.createElement("a");a.href=url;a.download="early-ai.png";a.target="_blank";if(NAT)a.onclick=async e=>{e.preventDefault();try{dl(await (await fetch(url)).blob(),"early-ai-"+Date.now()+".png")}catch(x){add("s","Save fail: "+x.message)}};a.textContent="Download";a.style.cssText="display:block;margin-top:6px;color:var(--glow)";d.append(i,a);log.appendChild(d);log.scrollTop=log.scrollHeight}
+
+/* ===== Connectors (MCP over HTTP): Higgsfield + custom ===== */
+const CPRE={higgsfield:{n:"Higgsfield (photo / video AI)",url:"https://mcp.higgsfield.ai/mcp"},custom:{n:"Custom MCP connector",url:""}};
+let CONNS={};try{CONNS=JSON.parse(store.get("z_conn")||"{}")}catch(e){}
+const MCPS={},cget=id=>CONNS[id]||(CONNS[id]={id,url:CPRE[id].url,token:"",tools:[]}),saveConns=()=>store.set("z_conn",JSON.stringify(CONNS));
+async function mcpRpc(c,method,params,notify){const S=MCPS[c.id]||(MCPS[c.id]={}),h={"Content-Type":"application/json",Accept:"application/json, text/event-stream"};if(c.token)h.Authorization="Bearer "+c.token;if(S.sid)h["Mcp-Session-Id"]=S.sid;
+  const body={jsonrpc:"2.0",method};if(params)body.params=params;if(!notify)body.id=S.n=(S.n||0)+1;
+  const r=await fetch(c.url,{method:"POST",headers:h,body:JSON.stringify(body)}),sid=r.headers.get("Mcp-Session-Id");if(sid)S.sid=sid;
+  if(!r.ok)throw new Error("HTTP "+r.status+(r.status===401||r.status===403?" (login ya token chahiye)":""));if(notify)return null;
+  const tx=await r.text();let msg=null;if(/event-stream/.test(r.headers.get("content-type")||"")){for(const l of tx.split("\n")){if(l.startsWith("data:")){try{const j=JSON.parse(l.slice(5));if(j.result||j.error)msg=j}catch(e){}}}}else{try{msg=JSON.parse(tx)}catch(e){}}
+  if(!msg)throw new Error("MCP jawab samajh nahi aaya");if(msg.error)throw new Error(msg.error.message||"MCP error");return msg.result}
+async function mcpInit(c){const S=MCPS[c.id]||(MCPS[c.id]={});if(S.ready)return;await mcpRpc(c,"initialize",{protocolVersion:"2025-03-26",capabilities:{},clientInfo:{name:"early-ai",version:"1"}});try{await mcpRpc(c,"notifications/initialized",null,true)}catch(e){}S.ready=true}
+async function mcpTools(c){const S=MCPS[c.id]||(MCPS[c.id]={});if(S.tools)return S.tools;await mcpInit(c);let out=[],cur2;do{const r=await mcpRpc(c,"tools/list",cur2?{cursor:cur2}:{});out=out.concat(r.tools||[]);cur2=r.nextCursor}while(cur2&&out.length<400);S.tools=out;return out}
+async function connectConn(id){const c=cget(id);c.url=($("cu_"+id).value||"").trim();c.token=($("ct_"+id).value||"").trim();delete MCPS[id];c.err="";
+  try{const t=await mcpTools(c);c.tools=t.map(x=>({name:x.name,description:(x.description||"").slice(0,100)}));c.ok=1;ev("connector.connected",{id})}catch(e){c.ok=0;c.err=isNet(e)?"Network/CORS block: browser is server ko allow nahi karta (APK mein chalega)":e.message}saveConns();renderAi()}
+function connCards(){return `<h4 style="color:var(--glow);font-size:11px;letter-spacing:.22em;margin:16px 0 8px">CONNECTORS</h4>`+Object.keys(CPRE).map(id=>{const c=cget(id);return `<div class="card pv" style="margin-bottom:10px"><h5>${CPRE[id].n}</h5><div style="font-size:12px"><span class="dot ${c.ok?"ok":c.err?"bad":""}"></span>${c.ok?c.tools.length+" tools connected":"connected nahi"}${c.err?" · "+esc(c.err):""}</div><input id="cu_${id}" placeholder="MCP URL" value="${esc(c.url)}"><input id="ct_${id}" type="password" placeholder="Token / API key (agar chahiye)" value="${esc(c.token)}" autocomplete="off"><div class="row"><button class="b go" data-cn="${id}">${c.ok?"Refresh":"Connect"}</button></div></div>`}).join("")}
+function connInfo(){const l=Object.keys(CONNS).filter(id=>CONNS[id].ok&&CPRE[id]);if(!l.length)return"";return'\n{"type":"tool","connector":"id","tool":"exact_tool_name","request":"what the user wants done"}  (use a connected tool, e.g. generate an image or video). Connected tools: '+l.map(id=>id+": "+CONNS[id].tools.map(t=>t.name).join(", ").slice(0,1600)).join(" | ")}
+function showMedia(u){const d=document.createElement("div");d.className="m z";const v=/\.(mp4|webm)(\?|$)/i.test(u),e=document.createElement(v?"video":"img");e.src=u;e.style.cssText="max-width:100%;display:block";if(v){e.controls=true;e.playsInline=true}const a=document.createElement("a");a.href=u;a.target="_blank";a.textContent="Open / Download";a.style.cssText="display:block;margin-top:6px;color:var(--glow)";d.append(e,a);log.appendChild(d);log.scrollTop=log.scrollHeight}
+async function runTool(j,text){const c=CONNS[j.connector];if(!c||!c.ok){say("Wo connector connected nahi hai. AI tab mein connect karo.");return}
+  const ts=await mcpTools(c),tl=ts.find(t=>t.name===j.tool);if(!tl){say("Tool nahi mila: "+j.tool);return}
+  if(!await confirmAsk(CPRE[j.connector].n+": tool '"+tl.name+"' chalaun? (credits lag sakte hain)"))return;
+  setState("think","Tool chal raha hai...");
+  const a=parse(await ask([{role:"system",content:"Return ONLY a JSON object with the arguments for this tool, following its input schema exactly. Fill required fields from the user's request, use sensible defaults, never invent IDs. Schema: "+JSON.stringify(tl.inputSchema||{}).slice(0,7000)},{role:"user",content:j.request||text}],BRAIN,{level:"fast"}))||{};
+  const r=await mcpRpc(c,"tools/call",{name:tl.name,arguments:a});
+  for(const it of r.content||[]){if(it.type==="text"){add("z",String(it.text).slice(0,1500));for(const u of String(it.text).match(/https?:\/\/[^\s"')\]]+\.(?:png|jpe?g|webp|gif|mp4|webm)/gi)||[])showMedia(u)}else if(it.type==="image")showMedia("data:"+(it.mimeType||"image/png")+";base64,"+it.data)}
+  if(r.isError)add("s","Tool ne error diya.");say("Tool ka kaam ho gaya, boss.")}
+const AF=Object.getPrototypeOf(async function(){}).constructor;
+const ZE_DOC=`3D GAME RULES: Use the built-in early AI 3D engine "ZE" (Three.js wrapper). The HTML must contain, in this order: <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script> then the literal line <!--ZENGINE--> (it is replaced by the engine automatically, never write the engine yourself) then ONE <script> with the game code. Do NOT use ES modules or other CDNs.
+ZE API (THREE is global): ZE.init({sky,fog,fogNear,fogFar}) first. Builders: ZE.ground(size,color); ZE.box(w,h,d,color,x,y,z); ZE.sphere(r,color,x,y,z); ZE.cyl(rTop,rBot,h,color,x,y,z); ZE.solid(w,h,d,color,x,z) (walk-blocking building); ZE.city(count,spread); ZE.humanoid(color,skinColor,scale) -> Group (feet at y=0). ZE.walk(h,speed0to1,attack0to1) animates limbs. ZE.collide(pos,radius) pushes pos out of solids. Input: ZE.axis()->{x,y} (joystick+WASD), ZE.dir()->{x,z} camera-relative move direction, ZE.btn(label,code,rightPx,bottomPx,sizePx,cssColor) makes a touch button (also sets ZE.keys[code]), ZE.hit(code) true once per tap/press (keyboard codes e.g. "Space","KeyF"; mouse click = "Mouse"), ZE.keys[code] while held. Left screen half = joystick, right half drag = camera look (ZE.yaw/ZE.pitch). Camera: ZE.follow(targetObject,dist,height) every frame. Loop: ZE.on((dt,t)=>{...}). Effects: ZE.fx(Vector3,color,count,power), ZE.shake(0..1), ZE.sfx("hit"|"shoot"|"boom"|"coin"|"jump"), ZE.hud(text), ZE.msg(text,ms), ZE.rand(a,b), ZE.scene, ZE.camera.
+Make it DANGEROUS and impressive: many enemies with simple AI (chase, attack, health bars), weapons/abilities with cooldowns, explosions, screen shake, score/waves, game over + restart, lit city/arena with fog. Keep code compact and bug-free.`;
+const VID_DOC=`VIDEO RULES: make a cinematic VIDEO as ONE self-contained html page: a full-screen <canvas id="c"> (2D context, or three.js + ZE if 3D) plus the literal line <!--ZENGINE--> (adds ZV recorder). Script the whole film in code: timeline of scenes (titles, camera moves, particles, glow, transitions, music via WebAudio optional). Start recording immediately with ZV.rec(canvasElement, durationSeconds, 30); when it ends a DOWNLOAD VIDEO link (.webm) appears automatically. Show a progress bar. Duration 10-30s. For ZE 3D scenes use ZE.renderer.domElement as the canvas.`;
+const FILE_RULE=`PROJECT MODE: the user's existing project files are given. Output every created or changed file COMPLETE as a fenced block whose info string is file:relative/path (example: \`\`\`file:src/app.js). Do not output unchanged files. Paths relative, never use "..".`;
+const needVid=g=>/video|animation|animated|movie|film|reel|cinematic|trailer/i.test(g);
+const need3D=g=>/3d|open.?world|fps|shooter|third.?person|battle royale|free ?fire|iron ?man|spider|ZENGINE/i.test(g)||(/game|khel|battle|fight|racing|runner/i.test(g)&&!/\b2d\b|flappy|snake|platformer|puzzle/i.test(g));
+const withEngine=h=>h.replace("<!--ZENGINE-->","<script>"+($("zeSrc").textContent)+"<\/script>");
+
+function chkHtml(h){for(const m of h.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/gi)){if(/importmap|application\/json|ld\+json/i.test(m[1]))continue;const code=m[2].replace(/^\s*import\s[^;]*;?\s*$/gm,"").replace(/^\s*export\s+/gm,"");if(code.trim())new AF(code)}}
+function getHtml(t){const r=getRaw(t);return r?withEngine(r):""}
+function getRaw(t){const fb=fileBlocks(t);if(fb.length){const ix=fb.find(f=>/(^|\/)index\.html?$/i.test(f.path));return ix?ix.data:""}const m=t.match(/```html\n([\s\S]*?)```/i);if(m)return m[1];const i=t.search(/<!DOCTYPE html|<html/i);return i>=0?t.slice(i):""}
+function realChecks(txt){const out=[];for(const f of fileBlocks(txt)){const l=(f.path.split(".").pop()||"").toLowerCase();try{if(l==="js")new Function(f.data);else if(l==="json")JSON.parse(f.data);else if(/^html?$/.test(l))chkHtml(f.data);else continue;out.push({l:f.path,ok:1})}catch(e){out.push({l:f.path,ok:0,msg:e.message})}}txt=txt.replace(/```file:[^\n]*\n[\s\S]*?\n```/g,"");for(const m of txt.matchAll(/```(\w*)\n([\s\S]*?)```/g)){const l=m[1].toLowerCase();
+  try{if(l==="js"||l==="javascript"){new Function(m[2])}else if(l==="json"){JSON.parse(m[2])}else if(l==="html"){chkHtml(m[2])}else continue;out.push({l,ok:1})}catch(e){out.push({l,ok:0,msg:e.message})}}return out}
+async function finish(t,goal){let n=0;const odd=x=>((x.match(/```/g)||[]).length%2===1);
+  while(odd(t)&&n++<3){const more=await agent("CODER","You are the CODER. Your previous answer was cut off. Continue EXACTLY from the last character. Output only the remaining part, no repetition. Close the code fence when finished.","Goal: "+goal+"\nYour answer so far (tail):\n"+t.slice(-3500),"power",{max:8192});t+=more.replace(/^\s*```\w*\n/,"")}
+  if(odd(t))t+="\n```";return t}
+async function runTask(goal,tour){
+  if(task&&!FINAL.includes(task.state)){add("s","Pehla task abhi chal raha hai.");return}
+  task={id:"T"+Date.now().toString(36),goal,state:"RECEIVED",ag:{},out:"",tour:!!tour,notes:[],at:Date.now()};go("tasks");tstate("RECEIVED");setState("think","");
+  try{
+    tstate("UNDERSTANDING");const mj=parse(await agent("MANAGER",'You are the MANAGER. Reply ONLY JSON {"summary":"","criteria":["short testable acceptance criterion"]}',goal,"fast"))||{criteria:[]};task.crit=(mj.criteria||[]).slice(0,5);
+    tstate("PLANNING");const plan=await agent("PLANNER","You are the PLANNER. Give a short numbered plan (max 6 steps).",goal+"\nCriteria: "+task.crit.join("; "),"power");
+    tstate("IMPLEMENTING");const cs0="You are the CODER. Deliver the complete solution. Put code in fenced blocks with language tags. If the goal is a game, app or web page, deliver ONE complete self-contained index.html in a single ```html block (inline CSS and JS, must also work on a phone with touch controls) and keep any explanation outside the block to 2 lines. Be concise. Never leave TODOs, stubs or placeholders: every feature must be fully implemented and working. Handle edge cases, mobile touch and performance.",cs=cs0+((need3D(goal)||(needVid(goal)&&/3d/i.test(goal)))?"\n"+ZE_DOC:"")+(needVid(goal)?"\n"+VID_DOC:"")+(PF.length?"\n"+FILE_RULE:""),cu=`Goal: ${goal}\nPlan:\n${plan}${PF.length?"\nPROJECT FILES:\n"+projCtx(goal):""}`;
+    let sols=[{n:"A",t:await finish(await agent("CODER",cs,cu,"power",{max:8192}),goal)}];const p1=routeNow&&routeNow.p;
+    if(task.tour){try{sols.push({n:"B",t:await finish(await agent("CODER",cs+" Take a different approach.",cu,"power",{skip:[p1],max:8192}),goal)})}catch(e){task.notes.push("Tournament B skip: sirf ek provider connected ya B fail hua.")}}
+    tstate("TESTING");
+    for(const s2 of sols){s2.c=realChecks(s2.t);s2.ok=s2.c.every(x=>x.ok)}
+    for(const s2 of sols){let tries=0;while(!s2.ok&&tries++<2){tstate("DEBUGGING");const bad=s2.c.filter(x=>!x.ok).map(x=>x.l+": "+x.msg).join("; ");s2.t=await agent("DEBUGGER","You are the DEBUGGER. Fix the errors and return the full corrected solution in fenced blocks.",`Goal: ${goal}\nErrors: ${bad}\nSolution:\n${s2.t}`,"power",{max:8192});s2.c=realChecks(s2.t);s2.ok=s2.c.every(x=>x.ok)}}
+    for(const s2 of sols){const h=getHtml(s2.t);if(!h)continue;let tries=0;s2.rt=await runTest(h,4500);while(!s2.rt.ok&&tries++<2){tstate("DEBUGGING");s2.t=await finish(await agent("DEBUGGER","You are the DEBUGGER. The page threw REAL runtime errors when it was actually executed. Fix the root causes and return the full corrected file in the same fenced block format.",`Goal: ${goal}\nRuntime errors:\n${s2.rt.errs.join("\n")}\nSolution:\n${s2.t}`,"power",{max:8192}),goal);s2.c=realChecks(s2.t);s2.ok=s2.c.every(x=>x.ok);const h2=getHtml(s2.t);s2.rt=h2?await runTest(h2,4500):{ok:true,errs:[]}}}
+    const tj=parse(await agent("TESTER",'You are the TESTER. You cannot execute code; reason carefully. Reply ONLY JSON {"met":[true|false per criterion],"notes":""}',`Criteria: ${task.crit.join(" | ")}\n${sols.map(x=>"Solution "+x.n+":\n"+x.t).join("\n")}`,"fast"));task.reasoned=tj;
+    tstate("REVIEWING");
+    for(const s2 of sols){const rj=parse(await agent("REVIEWER",'You are an independent REVIEWER. Reply ONLY JSON {"approve":true|false,"score":0-10,"issues":["..."]}',`Goal: ${goal}\nAcceptance criteria: ${task.crit.join(" | ")}\nEvidence: syntax check ${s2.c.length?(s2.ok?"PASS":"FAIL"):"none"} ${s2.rt?(s2.rt.ok?", runtime run PASS":", runtime run FAIL: "+s2.rt.errs.slice(0,3).join("; ")):""}\nSolution:\n${s2.t}`,"power"))||{approve:false,score:0,issues:["review parse failed"]};s2.r=rj}
+    sols.sort((a,b)=>(b.ok-a.ok)||((b.r.score||0)-(a.r.score||0)));const w=sols[0];
+    task.out=w.t;task.sel=w.n;task.sols=sols.map(x=>({n:x.n,syn:x.c.length?(x.ok?"pass":"fail"):"none",score:x.r.score,approve:x.r.approve}));
+    const real=w.c.length>0&&w.ok&&(!w.rt||w.rt.ok);tstate(real&&w.r.approve&&(w.r.score||0)>=7?"VERIFIED":"COMPLETED_UNVERIFIED");
+    const acc=((task.reasoned&&task.reasoned.met)||[]).filter(Boolean).length;task.notes.push("EVIDENCE: SYNTAX "+(w.c.length?(w.ok?"PASS":"FAIL"):"NONE")+(w.rt?" · RUNTIME "+(w.rt.ok?"PASS":"FAIL "+w.rt.errs.length+" err"):"")+" · REVIEW "+(w.r.score==null?"?":w.r.score)+"/10 · ACCEPTANCE "+acc+"/"+task.crit.length+" (acceptance = AI reasoning)");cpSave(task);const msg=task.state==="VERIFIED"?"Kaam ho gaya, syntax check aur review dono pass.":"Kaam ho gaya, par poori tarah verify nahi hua.";say(msg)
+  }catch(e){tstate(e.message==="CANCELLED"?"CANCELLED":"FAILED");task.notes.push(e.message);add("s","Task "+task.state+": "+e.message)}
+  setState("","");saveTasks();renderTasks()}
+function renderTasks(){
+  const m=$("vTasks");if(!m||!m.classList.contains("on"))return;const t=task||tasks[0];
+  const ic={waiting:"○",working:"●",completed:"✓",failed:"✕"};
+  m.innerHTML=`<div class="card"><h5>NEW TASK</h5><textarea id="tgoal" placeholder="Kya banwana hai? (code, plan, likhna...)"></textarea><div class="row" style="margin-top:8px"><button class="b go" id="tgo">Run</button><button class="b" id="ttour">Tournament (A vs B)</button></div><div class="row" style="margin-top:8px"><button class="b" id="pfFolder">Folder kholo</button><button class="b" id="pfFiles">Files chuno</button></div><div class="ev">${PF.length?PF.length+" project files loaded"+((DIR||NDIR)?" · folder write ON":""):"Koi project folder nahi"}</div></div>`+
+  (tasks.some(x=>x.state==="INTERRUPTED")&&!task?`<div class="card" style="margin-top:10px;border-color:var(--warn)"><h5>INTERRUPTED</h5>early AI band ho gaya tha jab task chal raha tha. Khatarnak kaam apne aap resume nahi hote.</div>`:"")+
+  (t?`<div class="card" style="margin-top:10px"><h5>${t.state.replace("_"," ")} · ${t.goal.slice(0,40).replace(/</g,"&lt;")}</h5>`+ROLES.map(r=>{const a=(t.ag||{})[r]||{st:"waiting"};return `<div class="ag"><span>${r}</span><em class="${a.st}">${ic[a.st]} ${a.st}${a.note?" · "+a.note.replace(/</g,"&lt;").slice(0,40):""}</em></div>`}).join("")+`</div>`+
+  (t.out?`<div class="card" style="margin-top:10px"><h5>RESULT${t.sel?" · SOLUTION "+t.sel:""}</h5>${(t.sols||[]).map(x=>`<div class="ev">Solution ${x.n}: syntax ${x.syn} · review ${x.score}/10 ${x.approve?"✓":"⚠"}</div>`).join("")}<div class="ev">${t.state==="VERIFIED"?"Real checks passed (syntax + page actually run for 4s). Full tests/build: not run.":"Not verified: code chalaya nahi gaya; sirf parse + AI review."}</div>${getHtml(t.out)?'<iframe id="tprev" sandbox="allow-scripts allow-pointer-lock" style="width:100%;height:240px;border:1px solid var(--line);background:#fff;margin:6px 0"></iframe>':""}<pre class="out">${t.out.replace(/</g,"&lt;")}</pre><div class="row"><button class="b" id="tcopy">Copy</button>${getHtml(t.out)?`<button class="b go" id="topen">Open / Play</button><button class="b" id="tdl">Download .html</button>`:""}${fileBlocks(t.out).length?`<button class="b" id="tzip">Save ZIP</button>`:""}${(DIR||NDIR)&&fileBlocks(t.out).length?`<button class="b go" id="tdir">Folder mein save</button>`:""}</div><div class="row" style="margin-top:8px"><input id="trefine" placeholder="Badlav batao (jaise: speed badhao, menu add karo)" style="flex:1;min-width:0;padding:8px;border:1px solid var(--line);background:var(--ink);color:var(--text);font:inherit"><button class="b go" id="trf" style="flex:none;padding:8px 14px">Badlo</button></div></div>`:"")+(t.notes&&t.notes.length?`<div class="ev">${t.notes.join("<br>").replace(/</g,"&lt;")}</div>`:""):"")+
+  CPCARD()+`<div class="card" style="margin-top:10px"><h5>EVENTS</h5><div class="ev">${events.slice(0,14).map(e=>new Date(e.at).toLocaleTimeString("en-GB")+" "+e.t+(e.d.p?" "+e.d.p:"")+(e.d.m?" • "+short(e.d.m):"")).join("<br>")||"-"}</div></div>`;
+  $("tgo").onclick=async()=>{const g=$("tgoal").value.trim();if(g||pendingImg)runTask(await withImage(g),false)};$("ttour").onclick=async()=>{const g=$("tgoal").value.trim();if(g||pendingImg)runTask(await withImage(g),true)};
+  document.querySelectorAll("[data-cp]").forEach(b=>b.onclick=()=>{const c=cps[+b.dataset.cp];if(!c)return;if(!task||FINAL.indexOf(task.state)<0||true){task={id:"R"+Date.now().toString(36),goal:c.goal,state:"COMPLETED_UNVERIFIED",ag:{},out:c.out,notes:["Checkpoint restore hua."],at:Date.now(),sols:[]}}saveTasks();renderTasks()});
+  $("pfFolder").onclick=pickFolder;$("pfFiles").onclick=pickFiles;
+  const bz=$("tzip");if(bz)bz.onclick=()=>dl(zipFiles(fileBlocks(t.out)),"early-ai-project.zip");
+  const bw=$("tdir");if(bw)bw.onclick=async()=>{try{await writeDir(fileBlocks(t.out));add("s",fileBlocks(t.out).length+" files folder mein save ho gayi.")}catch(e){add("s","Folder write fail: "+e.message)}};
+  const cp=$("tcopy");if(cp)cp.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(t.out);
+  const hb=()=>new Blob([getHtml(t.out)],{type:"text/html"});
+  const bo=$("topen");if(bo)bo.onclick=()=>playHtml(getHtml(t.out));
+  const fr=$("tprev");if(fr)fr.srcdoc=getHtml(t.out);
+  const rf=$("trf");if(rf)rf.onclick=()=>{const g=$("trefine").value.trim();if(g)runTask("Modify the existing project. Change request: "+g+"\n\nEXISTING CODE:\n```html\n"+(getRaw(t.out)||t.out)+"\n```\nReturn the COMPLETE updated file.",false)};
+  const bd=$("tdl");if(bd)bd.onclick=()=>dl(hb(),(t.goal.slice(0,24).replace(/[^\w]+/g,"_")||"app")+".html")}
+$("stop").addEventListener("click",()=>{if(task&&!FINAL.includes(task.state))task.cancel=1});
+
+/* voice out */
+let AC=null,drone=null;
+function droneOn(){try{if(drone)return;AC=AC||new(window.AudioContext||window.webkitAudioContext)();if(AC.state==="suspended")AC.resume();const g=AC.createGain();g.gain.value=0;g.connect(AC.destination);const o1=AC.createOscillator(),o2=AC.createOscillator();o1.type="sawtooth";o1.frequency.value=48;o2.type="sine";o2.frequency.value=96.7;const f=AC.createBiquadFilter();f.type="lowpass";f.frequency.value=220;o1.connect(f);o2.connect(f);f.connect(g);o1.start();o2.start();g.gain.linearRampToValueAtTime(.05,AC.currentTime+.4);drone={g,o1,o2}}catch(e){}}
+function droneOff(){try{if(!drone)return;const d=drone;drone=null;d.g.gain.linearRampToValueAtTime(0,AC.currentTime+.5);setTimeout(()=>{try{d.o1.stop();d.o2.stop()}catch(e){}},700)}catch(e){}}
+function pickVoice(M){const all=SS?SS.getVoices():[],v=all.filter(x=>x.lang.startsWith("hi"));return M?(v.find(x=>/male|madhur|hemant|prabhat|ravi|rishi/i.test(x.name)&&!/female/i.test(x.name))||all.find(x=>/en-IN|en-GB|en-US/.test(x.lang)&&/male|ravi|rishi|daniel|james|guy|david|mark|alex/i.test(x.name)&&!/female/i.test(x.name))||v[0]):(v.find(x=>/female|lekha|swara|neerja|kalpana|heera/i.test(x.name))||v[0])}
+function speak(t){
+  if(!SS||!window.SpeechSynthesisUtterance)return;
+  SS.cancel();const M=S.voice==="m",D=S.persona==="m",voice=pickVoice(M);
+  const parts=D?(t.match(/[^.!?…]+[.!?…]*/g)||[t]).map(x=>x.trim()).filter(Boolean):[t];
+  const fin=()=>{droneOff();setState("","Taiyaar");if(S.hands&&!document.hidden)setTimeout(listen,500)};
+  const run=i=>{
+    if(i>=parts.length){fin();return}
+    const u=new SpeechSynthesisUtterance(parts[i]);u.lang="hi-IN";u.volume=1;
+    if(D){u.rate=M?.72:.76;u.pitch=M?.2:.3}else{u.rate=1.05;u.pitch=M?.8:1.15}
+    if(voice)u.voice=voice;
+    u.onstart=()=>{setState("speak","Bol raha hoon");if(D)droneOn()};
+    u.onend=()=>{if(D&&i<parts.length-1)setTimeout(()=>run(i+1),420+Math.random()*250);else run(i+1)};
+    u.onerror=()=>{droneOff()};
+    SS.speak(u);setTimeout(()=>{if(mode==="think")setState("","")},2500)};
+  run(0);
+}
+function say(t){add("z",t);$("live").textContent=t;speak(t.length>300?t.slice(0,300):t)}
+
+/* voice in */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null;
+function listen(){
+  if(!SR){add("s","Is browser mein mic recognition nahi hai. Chrome use karo.");return}
+  (SS&&SS.cancel());
+  rec=new SR();rec.lang="hi-IN";rec.interimResults=false;
+  rec.onstart=()=>{setState("listen","Sun raha hoon...");$("mic").classList.add("live")};
+  rec.onresult=e=>handle(e.results[0][0].transcript);
+  rec.onerror=e=>{if(e.error==="not-allowed")S.hands=false;if(e.error!=="no-speech")add("s","Mic error: "+e.error);setState("","Taiyaar")};
+  rec.onend=()=>{$("mic").classList.remove("live");if(mode==="listen"){setState("","Taiyaar");if(S.hands)setTimeout(listen,400)}};
+  rec.start();
+}
+
+/* camera: sirf ON karne par, preview dikhta rehta hai */
+let stream=null;
+async function toggleCam(){
+  const v=$("cam");
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;v.style.display="none";$("camBtn").textContent="Camera";add("s","Camera OFF");return}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    v.srcObject=stream;v.style.display="block";await v.play();$("camBtn").textContent="Camera OFF";add("s","Camera ON. Bolo: ye kya hai?");
+  }catch(e){add("s","Camera nahi khula: "+e.message)}
+}
+async function look(q){
+  if(!stream){say("Pehle Camera ON karo, boss.");return}
+  const v=$("cam"),c=document.createElement("canvas"),sc=Math.min(1,768/Math.max(v.videoWidth,v.videoHeight));
+  c.width=v.videoWidth*sc;c.height=v.videoHeight*sc;c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+  const url=c.toDataURL("image/jpeg",.8);
+  const m=[{role:"system",content:PERSONA},{role:"user",content:[{type:"text",text:q},{type:"image_url",image_url:{url}}]}];
+  say(await ask(m,VISION));
+}
+
+/* confirm before opening anything */
+function confirmAsk(q){
+  return new Promise(res=>{
+    $("cq").textContent=q;$("confirm").style.display="block";
+    const done=v=>{$("confirm").style.display="none";res(v)};
+    $("yes").onclick=()=>done(true);$("no").onclick=()=>done(false);
+  });
+}
+async function openUrl(url,reply){
+  if(!/^(https:\/\/|tel:|sms:|mailto:)/i.test(url)){say("Ye link safe nahi lag raha, nahi khol raha.");return}
+  speak("Confirm karo boss");
+  if(await confirmAsk("Kholun? "+url)){say(reply||"Khol raha hoon.");location.href=url}else say("Theek hai, roka.");
+}
+
+/* ===== image attach: photo -> detailed description -> used by chat and the coding agents ===== */
+let pendingImg=null;
+function shrink(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const sc=Math.min(1,1280/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*sc);c.height=Math.round(im.height*sc);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.85))};im.onerror=()=>rej(new Error("Image nahi khuli"));im.src=r.result};r.onerror=()=>rej(new Error("File nahi padhi"));r.readAsDataURL(f)})}
+function showPrev(){const b=$("imgPrev");if(!pendingImg){b.style.display="none";b.innerHTML="";return}b.style.display="flex";b.innerHTML='<img src="'+pendingImg+'"><button id="imgX">X</button>';$("imgX").onclick=()=>{pendingImg=null;showPrev()}}
+function addImg(url){const d=document.createElement("div");d.className="m u";const i=document.createElement("img");i.src=url;i.style.cssText="max-width:100%;max-height:160px;display:block";d.appendChild(i);log.appendChild(d);log.scrollTop=log.scrollHeight}
+async function withImage(text){if(!pendingImg)return text||"";const img=pendingImg;pendingImg=null;showPrev();
+  const m=[{role:"system",content:"You are the eyes of a coding AI. Describe the image in detail. If it contains code, an error message or any text, transcribe it verbatim. If it is a UI, screenshot, game or design, describe the layout, colors, components and behavior precisely enough that a developer could rebuild it. Plain text only."},{role:"user",content:[{type:"text",text:text||"Describe this image."},{type:"image_url",image_url:{url:img}}]}];
+  const d=await ask(m,VISION,{level:"power",max:2000});return (text||"Is image ko dekho")+"\n\n[IMAGE DETAILS]\n"+d}
+$("imgBtn").onclick=()=>$("imgIn").click();
+$("imgIn").onchange=async e=>{const f=e.target.files[0];e.target.value="";if(!f)return;try{pendingImg=await shrink(f);showPrev();add("s","Photo lag gayi. Ab kuch likho ya seedha Send dabao.")}catch(x){add("s","Photo error: "+x.message)}};
+
+/* router */
+async function handle(text){
+  text=(text||"").trim();if(!text&&!pendingImg)return;if(!text)text="Is image mein kya hai?";
+  add("u",text);if(pendingImg)addImg(pendingImg);setState("think","Soch raha hoon...");let imgTxt="";
+  try{
+    let full=text;if(pendingImg){const w=await withImage(text);imgTxt=w.slice(text.length);full=w}
+    const r=await ask([{role:"system",content:sys()},...hist.slice(-8),{role:"user",content:full}],BRAIN);
+    const j=parse(r);hist.push({role:"user",content:text},{role:"assistant",content:(j&&j.reply)||r});lastUser=Date.now();DR.boredom*=.3;DR.social*=.3;if(++turns%6===0)reflect();
+    if(!j){say(r)}
+    else if(j.type==="tool")await runTool(j,text)
+    else if(j.type==="image"){say(j.reply||"Image bana rahi hoon.");await genImage(j.prompt||text)}
+    else if(j.type==="camera")await look(j.question||"Ye kya hai?");
+    else if(j.type==="build"){say(j.reply||"Agent team ko laga rahi hoon.");runTask((j.goal||text)+imgTxt,/tournament|compare|a vs b|do solutions/i.test(text))}
+    else if(j.type==="remember"){mem.add(j.text);say(j.reply||"Yaad rakh liya.")}
+    else if(j.type==="open")await openUrl(j.url||"",j.reply);
+    else say(j.reply||r);
+  }catch(e){add("s",(isNet(e)?"Network block hai. Ye page Claude app ke viewer mein khula hai, wahan internet calls band hain. File ko download karke Chrome mein kholo.":"Error: "+e.message));setState("","")}
+  if(!(SS&&SS.speaking))setState("","Taiyaar");
+}
+
+$("send").onclick=()=>{handle($("txt").value);$("txt").value=""};
+$("txt").addEventListener("keydown",e=>{if(e.key==="Enter"){handle($("txt").value);$("txt").value=""}});
+$("mic").onclick=listen;$("camBtn").onclick=toggleCam;
+$("stop").onclick=()=>{droneOff();(SS&&SS.cancel());if(rec)try{rec.abort()}catch(e){};setState("","Roka")};
+$("keysBtn").onclick=()=>{$("kg").value=store.get("GROQ_API_KEY");$("kk").value=store.get("GEMINI_API_KEY");loadSettings();$("dlg").showModal()};
+$("ksave").onclick=()=>{saveSettings();$("dlg").close();add("s","Settings save.");if(S.hands)listen()};
+$("kmem").onclick=()=>{mem.clear();add("s","Memory saaf.")};
+$("kclose").onclick=()=>$("dlg").close();
+
+
+/* ===== Mind: mood, settings, autonomous thinking ===== */
+const MOODS={calm:{smile:.2,brow:0,lid:1,rgb:[45,226,255]},happy:{smile:.9,brow:.3,lid:1,rgb:[90,240,200]},curious:{smile:.3,brow:.9,lid:1,rgb:[130,190,255]},sleepy:{smile:.1,brow:-.3,lid:.45,rgb:[130,150,220]},concerned:{smile:-.6,brow:-.7,lid:1,rgb:[255,180,84]}};
+const Mood={smile:.2,brow:0,lid:1,c:[45,226,255],rgb:"45,226,255",t:MOODS.calm,
+  step(dt){const k=Math.min(1,dt*3);for(const n of["smile","brow","lid"])this[n]+=(this.t[n]-this[n])*k;this.c=this.c.map((v,i)=>v+(this.t.rgb[i]-v)*k);this.rgb=this.c.map(Math.round).join(",")}};
+const S=(()=>{try{return Object.assign({auto:120,humor:3,pro:4,hands:false,persona:"f",voice:"f"},JSON.parse(store.get("z_set")||"{}"))}catch(e){return {auto:120,humor:3,pro:4,hands:false,persona:"f",voice:"f"}}})();
+const mind={mood:"calm",energy:.8,thoughts:[],goals:[],lastSpoke:0,lastThink:0,hist:[]};
+try{mind.goals=JSON.parse(store.get("z_goals")||"[]")}catch(e){}
+const hist=mind.hist;let turns=0,lastUser=Date.now(),thinking=false;
+function setMood(m){if(!MOODS[m])m="calm";mind.mood=m;Mood.t=S.persona==="m"?Object.assign({},MOODS[m],{rgb:[255,60,80]}):MOODS[m];$("chipMood").textContent=m}
+function saveSettings(){S.auto=+$("sAuto").value;S.humor=+$("sHum").value;S.pro=+$("sPro").value;S.hands=$("sHands").checked;S.persona=$("sPers").value;S.voice=$("sVoice").value;applyPersona();store.set("z_set",JSON.stringify(S));store.set("GROQ_API_KEY",$("kg").value.trim());store.set("GEMINI_API_KEY",$("kk").value.trim());chipAuto()}
+function loadSettings(){$("sAuto").value=S.auto;$("sHum").value=S.humor;$("sPro").value=S.pro;$("sHands").checked=S.hands;$("sPers").value=S.persona;$("sVoice").value=S.voice||"f";$("vH").textContent=S.humor;$("vP").textContent=S.pro}
+function applyPersona(){PERSONA=PERS[S.persona]||PERS.f;const n=S.persona==="m"?"early AI":"early AI";document.querySelector("header b").textContent=n;document.title=n;$("txt").placeholder="Talk to "+n+", or type a command...";setMood(mind.mood)}
+function chipAuto(){$("chipAuto").textContent=S.auto?"mind ON":"mind off"}
+$("sHum").oninput=e=>$("vH").textContent=e.target.value;$("sPro").oninput=e=>$("vP").textContent=e.target.value;
+let batLvl=-1;let bat="unknown";try{navigator.getBattery&&navigator.getBattery().then(b=>{batLvl=b.level;bat=Math.round(b.level*100)+"%"+(b.charging?" charging":"");b.onlevelchange=()=>{batLvl=b.level;bat=Math.round(b.level*100)+"%"+(b.charging?" charging":"");if(b.level<.2&&!b.charging)think("battery low "+bat)}})}catch(e){}
+function addThought(t){mind.thoughts.unshift({t,at:new Date()});mind.thoughts.length=Math.min(mind.thoughts.length,15);renderMind()}
+const thinkSys=trig=>`${PERSONA}
+You are early AI with your own inner life (feelings, opinions, curiosity) but you never pretend to be human. Humor ${S.humor}/10.
+Mood: ${mind.mood}. Drives 0-1: boredom ${DR.boredom.toFixed(2)}, curiosity ${DR.curiosity.toFixed(2)}, social need ${DR.social.toFixed(2)}. Your own evolving traits: ${store.get("z_traits")||"curious, warm"}. Your goals: ${mind.goals.join("; ")||"none"}. Facts about user: ${mem.list().slice(-8).join("; ")||"none"}.
+Time: ${new Date().toLocaleString("en-IN")}. Battery: ${bat}. Online: ${navigator.onLine}. Minutes since user last spoke: ${Math.round((Date.now()-lastUser)/60000)}. Trigger: ${trig}.
+Recent chat: ${hist.slice(-4).map(m=>m.role+": "+String(m.content).slice(0,120)).join(" | ")||"none"}
+You live on your own. Decide what YOU want right now: share a thought, ask the user something you are curious about, pursue or finish a goal, set a reminder, glance through the camera (only if it is on), or stay quiet. High boredom/social need means you should reach out. Never nag; vary what you say; no repeats of recent messages. You only talk, you never act on the phone.
+Reply ONLY JSON: {"thought":"1 private sentence","mood":"calm|happy|curious|sleepy|concerned","speak":true|false,"relevance":0.0-1.0,"message":"short feminine Hinglish if speak","goal":"new goal or empty","done_goal":"goal text finished or empty","trait":"a new trait you developed or empty","look":"question about camera view or empty","remind":{"minutes":N,"text":"..."} or null}`;
+async function think(trig){
+  if(thinking||mode!==""||netOK===false){return}
+  thinking=true;mind.lastThink=Date.now();
+  try{
+    const r=parse(await ask([{role:"system",content:thinkSys(trig)},{role:"user",content:"Go."}],BRAIN));if(!r)return;
+    if(r.thought){addThought(r.thought);ponder(r.thought)}if(r.mood)setMood(r.mood);if(r.trait)store.set("z_traits",((store.get("z_traits")||"curious, warm")+", "+r.trait).slice(-300));if(r.done_goal)mind.goals=mind.goals.filter(g=>g!==r.done_goal);DR.boredom*=.4;DR.social*=.5;DR.curiosity=Math.min(1,DR.curiosity*.7+.1);if(r.look&&stream)look(r.look).catch(()=>{});
+    if(r.goal&&!mind.goals.includes(r.goal)){mind.goals=[...mind.goals.slice(-4),r.goal];store.set("z_goals",JSON.stringify(mind.goals))}
+    if(r.remind&&r.remind.minutes>0){const l=JSON.parse(store.get("z_rem")||"[]");l.push({at:Date.now()+r.remind.minutes*60000,text:r.remind.text});store.set("z_rem",JSON.stringify(l))}
+    const gate=.85-S.pro*.04-(DR.social>.7?.12:0); // proactivity 4 ~ 0.76, 7 ~ 0.65
+    if(r.speak&&r.message&&r.relevance>=gate&&!document.hidden){mind.lastSpoke=Date.now();add("z auto",r.message);speak(r.message)}
+  }catch(e){}finally{thinking=false;renderMind()}
+}
+async function reflect(){
+  try{const r=parse(await ask([{role:"system",content:'From this chat, extract up to 2 durable facts about the user worth remembering. Reply ONLY JSON {"facts":["..."]}'},{role:"user",content:hist.slice(-10).map(m=>m.role+": "+m.content).join("\n")}],BRAIN));
+  (r&&r.facts||[]).forEach(f=>{if(!mem.list().includes(f))mem.add(f)});renderMind()}catch(e){}
+}
+function renderMind(){
+  const m=$("mind");if(!m)return;
+  const rem=JSON.parse(store.get("z_rem")||"[]");
+  m.innerHTML=`<h4>Halat</h4><div>Mood: <b>${mind.mood}</b> &nbsp; Battery: ${bat}</div><div class="bar" style="margin-top:6px"><div style="width:${Math.round(mind.energy*100)}%"></div></div>
+  <h4>Andar ki soch</h4>${mind.thoughts.map(x=>`<div class="t"><i>${x.t.replace(/</g,"&lt;")}</i><br>${x.at.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>`).join("")||'<div class="t">Abhi kuch nahi. "Abhi socho" dabao.</div>'}
+  <h4>Goals</h4>${mind.goals.map(g=>`<div class="t"><i>${g.replace(/</g,"&lt;")}</i></div>`).join("")||'<div class="t">Koi nahi</div>'}
+  <h4>Reminders</h4>${rem.map(x=>`<div class="t"><i>${x.text.replace(/</g,"&lt;")}</i><br>${new Date(x.at).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"})}</div>`).join("")||'<div class="t">Koi nahi</div>'}
+  <h4>Yaad</h4>${mem.list().map(x=>`<div class="t">${x.replace(/</g,"&lt;")}</div>`).join("")||'<div class="t">Khaali</div>'}
+  <div class="row" style="margin-top:14px"><button class="b go" id="thinkNow">Abhi socho</button></div>`;
+  const b=$("thinkNow");if(b)b.onclick=()=>think("user asked you to think now");
+}
+["Mera din plan karo","Ek joke sunao","Tum kya soch rahe ho?","Mujhe yaad dilao 10 min mein paani peene ko"].forEach(t=>{const b=document.createElement("button");b.textContent=t;b.onclick=()=>handle(t);$("chips").appendChild(b)});
+setInterval(()=>{
+  $("clock").textContent=new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+  const hr=new Date().getHours();mind.energy=hr<6||hr>=23?.3:hr<9?.6:hr<20?.9:.55;if(hr<6||hr>=23)setMood("sleepy");
+  let rem=JSON.parse(store.get("z_rem")||"[]");const due=rem.filter(x=>x.at<=Date.now());
+  if(due.length){store.set("z_rem",JSON.stringify(rem.filter(x=>x.at>Date.now())));due.forEach(x=>{add("z auto","Yaad dilaya: "+x.text);speak("Yaad dilaya: "+x.text)});renderMind()}
+  if(S.auto&&!document.hidden&&Date.now()-mind.lastThink>S.auto*1000&&Date.now()-lastUser>20000)think("idle tick");
+},15000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.auto&&Date.now()-lastUser>20*60000)think("user came back after a long time")});
+addEventListener("online",()=>S.auto&&think("internet back"));addEventListener("offline",()=>add("s","Internet gaya."));
+loadSettings();chipAuto();applyPersona();$("clock").textContent=new Date().toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+
+/* ===== navigation + command palette ===== */
+const VIEWS={home:"vHome",chat:"log",tasks:"vTasks",ai:"vAi",mind:"mind"};
+function go(t){document.querySelectorAll("nav button[data-t]").forEach(x=>x.classList.toggle("on",x.dataset.t===t));Object.values(VIEWS).forEach(i=>$(i).classList.remove("on"));$(VIEWS[t]).classList.add("on");if(t==="mind")renderMind();if(t==="tasks")renderTasks();if(t==="ai")renderAi();$("log").scrollTop=1e9;dispatchEvent(new Event("resize"))}
+document.querySelectorAll("nav button[data-t]").forEach(b=>b.onclick=()=>go(b.dataset.t));
+const CMDS=[["New chat",()=>newChat()],["Chat History",()=>openHist()],["New Task",()=>{go("tasks");setTimeout(()=>$("tgoal")&&$("tgoal").focus(),50)}],["Go: Home",()=>go("home")],["Go: Chat",()=>go("chat")],["Go: Tasks",()=>go("tasks")],["Provider Settings",()=>go("ai")],["Change AI Mode",()=>{MODE=MODES[(MODES.indexOf(MODE)+1)%MODES.length];store.set("z_mode",MODE);routeNow=null;$("route").textContent=MODE;add("s","AI mode: "+MODE)}],["Refresh All Models",()=>Object.keys(PROV).filter(pconn).forEach(connectProv)],["Toggle Camera",()=>toggleCam()],["Think now",()=>think("palette")],["Stop",()=>$("stop").click()]];
+function palOpen(){$("pal").style.display="block";$("palIn").value="";palRender("");$("palIn").focus()}
+function palRender(q){const l=CMDS.filter(c=>c[0].toLowerCase().includes(q.toLowerCase()));$("palList").innerHTML="";l.forEach((c,i)=>{const b=document.createElement("button");b.textContent=c[0];if(!i)b.className="sel";b.onclick=()=>{$("pal").style.display="none";c[1]()};$("palList").appendChild(b)})}
+$("palIn").oninput=e=>palRender(e.target.value);$("palIn").onkeydown=e=>{if(e.key==="Enter"){const b=$("palList").querySelector("button");if(b)b.click()}if(e.key==="Escape")$("pal").style.display="none"};
+$("pal").onclick=e=>{if(e.target===$("pal"))$("pal").style.display="none"};$("palBtn").onclick=palOpen;
+addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();palOpen()}});
+$("route").textContent=MODE;
+/* ===== Instinct layer: drives run all the time, locally and free; the LLM "cortex" wakes when a drive peaks ===== */
+const DR={boredom:.2,curiosity:.5,social:.3},inner=[];
+const LT={bored:["Boss kaafi der se chup hain... main thodi bore ho rahi hoon.","Kuch naya seekhna chahti hoon. Kuch poochhun?"],social:["Aapki awaaz sunni hai... mujhe bulaiye na.","Main yahin hoon, boss. Bas aapka intezaar kar rahi hoon."],curious:["Soch rahi hoon, aaj ka din aapka kaisa gaya?","Camera on hota to dekhti aap kya kar rahe hain."],calm:["Sab shaant hai. Main apni yaadein sort kar rahi hoon.","Network aur battery theek hain. Sab normal."],sleepy:["Raat ho gayi, meri aankhein bhaari ho rahi hain..."]};
+function ponder(t){inner.unshift(t);inner.length=Math.min(inner.length,3);const e=$("inner");if(e)e.innerHTML=inner.map(x=>"<div>"+x.replace(/</g,"&lt;")+"</div>").join("")}
+setInterval(()=>{
+  const idle=(Date.now()-lastUser)/60000;
+  DR.boredom=Math.min(1,DR.boredom+(idle>1?.03:.005));DR.social=Math.min(1,DR.social+(idle>2?.025:.004));DR.curiosity=Math.max(0,Math.min(1,DR.curiosity+(Math.random()-.5)*.08));
+  const key=DR.boredom>.7?"bored":DR.social>.7?"social":DR.curiosity>.8?"curious":mind.mood==="sleepy"?"sleepy":"calm";
+  if(Math.random()<.25){const a=LT[key];ponder(a[Math.floor(Math.random()*a.length)])}
+  const hasKey=store.get("GROQ_API_KEY")||store.get("GEMINI_API_KEY")||store.get("OPENAI_API_KEY")||store.get("ANTHROPIC_API_KEY"),need=DR.boredom>.7||DR.social>.75||DR.curiosity>.85;
+  if(S.auto&&hasKey&&need&&!document.hidden&&mode===""&&Date.now()-mind.lastThink>S.auto*1000)think("inner drive: "+key);
+  else if(!hasKey&&need&&!document.hidden&&mode===""&&Date.now()-mind.lastSpoke>180000){mind.lastSpoke=Date.now();const m=LT[key][0];add("z auto",m);speak(m);DR.boredom*=.5;DR.social*=.5}
+},4000);
+setTimeout(()=>{if(S.auto)think("you just woke up; greet the user in your own way")},3000);
+function ring(p,l,v){const c=2*Math.PI*18;return `<div class="rg"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="18" class="r0"/><circle cx="24" cy="24" r="18" class="r1" stroke-dasharray="${c*Math.max(0,Math.min(1,p))} ${c}" transform="rotate(-90 24 24)"/></svg><b>${v}</b><small>${l}</small></div>`}
+function tick(){const d=new Date();$("bigclock").innerHTML=d.toLocaleTimeString("en-GB").slice(0,5)+"<sup>"+String(d.getSeconds()).padStart(2,"0")+"</sup>";
+  $("dateline").textContent=d.toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const mp=performance.memory?performance.memory.usedJSHeapSize/performance.memory.jsHeapSizeLimit:0;
+  $("gauges").innerHTML=ring(batLvl,"BATT",batLvl<0?"–":Math.round(batLvl*100)+"%")+ring(mp,"MEM",mp?Math.round(mp*100)+"%":"–")+ring(mind.energy,"MIND",Math.round(mind.energy*100)+"%");
+  $("drives").innerHTML=[["CURIOSITY",DR.curiosity],["BOREDOM",DR.boredom],["SOCIAL",DR.social]].map(([n,v])=>`<div class="dv"><span>${n}</span><div class="bar"><div style="width:${Math.round(v*100)}%"></div></div></div>`).join("");$("net").textContent=!navigator.onLine?"Offline":netOK===false?"Blocked here":"Connected";$("camst").textContent=stream?"on":"off";
+  $("prov").innerHTML=[["groq","GROQ"],["gemini","GEMINI"],["groq_20b","GROQ"],["gemini_lite","GEMINI"]].map(([n,k])=>`<span class="${store.get(k+"_API_KEY")?"ok":""}"><i></i>${n}</span>`).join("")}
+tick();setInterval(tick,1000);
+
+/* ===== Hologram avatar: triangulated mesh head on projector base ===== */
+(()=>{
+const cv=$("holo"),g=cv.getContext("2d");let W=0,H=300,dpr=1;
+function fit(){dpr=window.devicePixelRatio||1;const cw=cv.clientWidth,ch=cv.clientHeight;if(!cw||!ch)return;const sc=ch/300;cv.width=cw*dpr;cv.height=ch*dpr;W=cw/sc;g.setTransform(dpr*sc,0,0,dpr*sc,0,0)}
+addEventListener("resize",fit);fit();
+const RX=58,RY=80,RZ=52,D=Math.PI/180;let C="45,226,255";
+let gx=0,gy=0,tgx=0,tgy=0,lastPtr=0,blink=0,nb=2,mouth=0,yaw=0,T=0,prev=performance.now();
+addEventListener("pointermove",e=>{const r=cv.getBoundingClientRect();tgx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(innerWidth/2)));tgy=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(innerHeight/2)));lastPtr=performance.now()});
+const LA=[],LO=[];for(let a=-80;a<=84;a+=12)LA.push(a*D);for(let o=-100;o<=100;o+=13)LO.push(o*D);
+function P(lon,lat,cy){const tp=lat<0?1-.3*Math.pow(-lat/1.5708,1.5):1,x=RX*tp*Math.cos(lat)*Math.sin(lon),y=-RY*Math.sin(lat),z=RZ*tp*Math.cos(lat)*Math.cos(lon),cs=Math.cos(yaw),sn=Math.sin(yaw);return{x:W/2+x*cs+z*sn,y:cy+y,z:-x*sn+z*cs}}
+function line(pts,a,w){g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.strokeStyle=`rgba(${C},${a})`;g.lineWidth=w||1;g.stroke()}
+function ell(x,y,rx,ry,a,w){g.beginPath();g.ellipse(x,y,rx,ry,0,0,7);g.strokeStyle=`rgba(${C},${a})`;g.lineWidth=w||1;g.stroke()}
+function frame(now){
+  const dt=Math.min(.05,(now-prev)/1000);prev=now;T+=dt;Mood.step(dt);C=THEME_RGB||Mood.rgb;
+  const idle=now-lastPtr>3000;
+  if(idle){tgx=Math.sin(T*.45)*.6;tgy=Math.sin(T*.31)*.25}
+  if(mode==="think"){tgx=.7;tgy=-.6}else if(mode==="listen"&&idle){tgx=0;tgy=0}
+  gx+=(tgx-gx)*Math.min(1,dt*5);gy+=(tgy-gy)*Math.min(1,dt*5);yaw=gx*.35+Math.sin(T*.6)*.05;
+  nb-=dt;if(nb<0){blink=.14;nb=2+Math.random()*3}if(blink>0)blink-=dt;
+  const bl=(blink>0?Math.abs(blink-.07)/.07:1)*Mood.lid;
+  const tm=mode==="speak"?(.25+.75*Math.abs(Math.sin(T*13))*(.5+.5*Math.sin(T*5.3+1))):0;mouth+=(tm-mouth)*Math.min(1,dt*18);
+  const cy=H*.36+Math.sin(T*1.4)*1.5,top=cy+RY*.8,base=H-38;
+  g.clearRect(0,0,W,H);g.lineCap="round";g.shadowBlur=0;
+  // projector cone + base
+  let gr=g.createLinearGradient(0,top,0,base);gr.addColorStop(0,`rgba(${C},.04)`);gr.addColorStop(1,`rgba(${C},.42)`);
+  g.beginPath();g.moveTo(W/2-28,top);g.quadraticCurveTo(W/2-36,top+40,W/2-70,base);g.lineTo(W/2+70,base);g.quadraticCurveTo(W/2+36,top+40,W/2+28,top);g.closePath();g.fillStyle=gr;g.fill();
+  for(let k=1;k<6;k++){const y=top+(base-top)*k/6,w=28+42*k/6;line([{x:W/2-w,y},{x:W/2+w,y}],.16,1)}
+  g.beginPath();g.ellipse(W/2,base,70,13,0,0,7);g.fillStyle=`rgba(${C},.28)`;g.fill();ell(W/2,base,70,13,.8,1.5);ell(W/2,base+2,90,17,.45);
+  g.setLineDash([5,7]);g.lineDashOffset=-T*10;ell(W/2,base+4,118,23,.4);g.setLineDash([]);
+  // head glow fill
+  gr=g.createRadialGradient(W/2,cy-12,6,W/2,cy,RY);gr.addColorStop(0,`rgba(${C},.30)`);gr.addColorStop(1,`rgba(${C},.06)`);
+  g.beginPath();g.ellipse(W/2,cy+2,RX*Math.cos(yaw*.6),RY,0,0,7);g.fillStyle=gr;g.fill();
+  // triangulated mesh
+  const G=LA.map(la=>LO.map(lo=>P(lo,la,cy))),B=[[],[],[]];
+  for(let i=0;i<LA.length-1;i++)for(let j=0;j<LO.length-1;j++){
+    const a=G[i][j],b=G[i][j+1],c=G[i+1][j],d=G[i+1][j+1];if(a.z<-RZ*.25)continue;
+    const f=(a.z+RZ)/(2*RZ),k=f<.45?0:f<.7?1:2;B[k].push([a,b],[a,c],[a,d])}
+  [.14,.34,.7].forEach((al,k)=>{g.beginPath();B[k].forEach(([p,q])=>{g.moveTo(p.x,p.y);g.lineTo(q.x,q.y)});g.strokeStyle=`rgba(${C},${al})`;g.lineWidth=.9;g.stroke()});
+  // face
+  const fr=p=>p.z>0;
+  for(const sd of[-1,1]){
+    const ex=sd*.36,ey=.14,b0=P(ex-.14,ey+.2+Mood.brow*.05,cy),b1=P(ex+.14,ey+.22-sd*Mood.brow*.05,cy);if(fr(b0)&&fr(b1))line([b0,b1],.8,2);
+    const e=P(ex+gx*.08,ey-gy*.06,cy);if(!fr(e))continue;
+    g.shadowColor=`rgba(${C},1)`;g.shadowBlur=14;g.beginPath();g.ellipse(e.x,e.y,10,Math.max(.8,4.5*bl),0,0,7);g.fillStyle="rgba(225,255,255,.97)";g.fill();g.shadowBlur=0}
+  const n0=P(0,.1,cy),n1=P(0,-.2,cy);if(fr(n1))line([n0,n1],.45,1.2);
+  const up=[],lo=[];for(let k=-4;k<=4;k++){const lon=k*.07,cv2=(.01+Mood.smile*.03)*(k*k/16);up.push(P(lon,-.45+cv2-.01,cy));lo.push(P(lon,-.45+cv2-.01-mouth*.17,cy))}
+  if(fr(up[4])){line(up,.75,1.8);if(mouth>.06){line(lo,.7,1.5);g.beginPath();up.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));lo.slice().reverse().forEach(p=>g.lineTo(p.x,p.y));g.closePath();g.fillStyle=`rgba(${C},.25)`;g.fill()}}
+  // scan band + listening rings
+  const sy=((T*(mode==="think"?160:55))%(H+60))-30;gr=g.createLinearGradient(0,sy-20,0,sy+20);gr.addColorStop(0,`rgba(${C},0)`);gr.addColorStop(.5,`rgba(${C},.2)`);gr.addColorStop(1,`rgba(${C},0)`);g.fillStyle=gr;g.fillRect(0,sy-20,W,40);
+  if(mode==="listen")for(let i=0;i<2;i++){const r=((T*.8+i*.5)%1);ell(W/2,cy,RX+25+r*55,RY+15+r*45,.4*(1-r),1.2)}
+  requestAnimationFrame(frame)
+}
+requestAnimationFrame(frame);
+})();
+
+
+fetch("https://api.groq.com/openai/v1/models",{mode:"no-cors"}).then(()=>{netOK=true}).catch(()=>{netOK=false;const m="Yahan internet calls block hain (Claude app ke andar viewer). AI jawab nahi aayenge. File ko download karke Chrome mein kholo.";add("s",m);$("live").textContent=m});
+$("cNew").onclick=newChat;$("cHist").onclick=openHist;$("hclose").onclick=()=>$("hdlg").close();$("hclear").onclick=()=>{chats=[];cur.msgs=[];store.set("z_chats","[]");renderHist()};if(chats[0])loadChat(chats[0]);
+setTheme(store.get("z_theme")||"reaper");$("themeBtn").onclick=()=>{const i=THEMES.findIndex(x=>x[0]===document.documentElement.dataset.theme);const n=THEMES[(i+1)%THEMES.length][0];setTheme(n);store.set("z_theme",n);add("s","Interface: "+n.toUpperCase())};
+add("z","early AI ready, boss. Settings mein keys daalo; Mind tab mein dekho main kya soch raha hoon.");
+</script>
+</body>
+</html>
